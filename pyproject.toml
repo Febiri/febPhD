@@ -1,0 +1,9 @@
+[project]
+name = "febphd"
+version = "1.0.0"
+description = "febPhD - Academic Research Workstation & Conference Scout"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.vercel]
+entrypoint = "backend.main:app"
