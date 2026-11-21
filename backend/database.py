@@ -1,0 +1,138 @@
+from datetime import datetime
+from typing import Generator
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from backend.config import DATABASE_URL
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+class Paper(Base):
+    __tablename__ = "papers"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    zotero_item_key = Column(String(64), unique=True, index=True, nullable=True)
+    title = Column(String(512), nullable=False, index=True)
+    authors = Column(String(512), default="")
+    abstract = Column(Text, default="")
+    publication_year = Column(String(32), default="")
+    journal = Column(String(256), default="")
+    
+    # File & Path attributes
+    pdf_path = Column(String(512), nullable=True)
+    has_pdf = Column(Boolean, default=False)
+    
+    # AI Summary attributes
+    summary_text = Column(Text, nullable=True)
+    summary_problem = Column(Text, nullable=True)
+    summary_methodology = Column(Text, nullable=True)
+    summary_results = Column(Text, nullable=True)
+    summary_limitations = Column(Text, nullable=True)
+
+    # Full Paper Reading attributes
+    full_text = Column(Text, nullable=True)
+    
+    # Audio attributes
+    audio_mode = Column(String(32), default="summary")  # "summary" or "full_paper"
+    audio_path = Column(String(512), nullable=True)
+    audio_duration = Column(Float, default=0.0)
+    summary_audio_path = Column(String(512), nullable=True)
+    summary_audio_duration = Column(Float, default=0.0)
+    full_audio_path = Column(String(512), nullable=True)
+    full_audio_duration = Column(Float, default=0.0)
+    voice_used = Column(String(64), default="en-US-ChristopherNeural")
+    
+    # Processing status: "Pending", "Processing", "Ready", "Failed"
+    status = Column(String(32), default="Pending", index=True)
+    error_message = Column(Text, nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self, include_full_text: bool = True):
+        # Resolve active audio path and duration
+        active_audio_path = self.audio_path
+        active_audio_duration = self.audio_duration or 0.0
+        
+        # If active audio path is not set but one of the specific paths exists, fallback gracefully
+        if not active_audio_path:
+            if self.audio_mode == "full_paper" and self.full_audio_path:
+                active_audio_path = self.full_audio_path
+                active_audio_duration = self.full_audio_duration or 0.0
+            elif self.summary_audio_path:
+                active_audio_path = self.summary_audio_path
+                active_audio_duration = self.summary_audio_duration or 0.0
+
+        d = {
+            "id": self.id,
+            "zotero_item_key": self.zotero_item_key,
+            "title": self.title,
+            "authors": self.authors,
+            "abstract": self.abstract,
+            "publication_year": self.publication_year,
+            "journal": self.journal,
+            "pdf_path": self.pdf_path,
+            "has_pdf": self.has_pdf,
+            "has_full_text": bool(self.full_text and self.full_text.strip()),
+            "summary_text": self.summary_text,
+            "summary_problem": self.summary_problem,
+            "summary_methodology": self.summary_methodology,
+            "summary_results": self.summary_results,
+            "summary_limitations": self.summary_limitations,
+            "full_text": self.full_text if include_full_text else None,
+            "audio_mode": self.audio_mode or "summary",
+            "audio_path": active_audio_path,
+            "audio_duration": active_audio_duration,
+            "summary_audio_path": self.summary_audio_path or (self.audio_path if self.audio_mode == "summary" else None),
+            "summary_audio_duration": self.summary_audio_duration or (self.audio_duration if self.audio_mode == "summary" else 0.0),
+            "full_audio_path": self.full_audio_path or (self.audio_path if self.audio_mode == "full_paper" else None),
+            "full_audio_duration": self.full_audio_duration or (self.audio_duration if self.audio_mode == "full_paper" else 0.0),
+            "has_summary_audio": bool(self.summary_audio_path or (self.audio_path and self.audio_mode == "summary")),
+            "has_full_audio": bool(self.full_audio_path or (self.audio_path and self.audio_mode == "full_paper")),
+            "voice_used": self.voice_used,
+            "status": self.status,
+            "error_message": self.error_message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        return d
+
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+    # Automatically migrate SQLite columns if missing
+    try:
+        with engine.connect() as conn:
+            cursor = conn.connection.cursor()
+            cursor.execute("PRAGMA table_info(papers)")
+            existing_cols = [row[1] for row in cursor.fetchall()]
+            new_cols = [
+                ("full_text", "TEXT"),
+                ("audio_mode", "VARCHAR(32) DEFAULT 'summary'"),
+                ("summary_audio_path", "VARCHAR(512)"),
+                ("summary_audio_duration", "FLOAT DEFAULT 0.0"),
+                ("full_audio_path", "VARCHAR(512)"),
+                ("full_audio_duration", "FLOAT DEFAULT 0.0"),
+            ]
+            for col_name, col_def in new_cols:
+                if col_name not in existing_cols:
+                    cursor.execute(f"ALTER TABLE papers ADD COLUMN {col_name} {col_def}")
+            conn.connection.commit()
+    except Exception as e:
+        # Pass if not SQLite or column already added
+        pass
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+

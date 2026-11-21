@@ -1,0 +1,61 @@
+# Environment variables and API keys (CRITICAL - NEVER COMMIT SECRETS)
+.env
+.env.local
+.env.*
+*.env
+!.env.example
+
+# SQLite local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# Local media, audio files, and uploaded PDFs
+static/audio/*.mp3
+!static/audio/.gitkeep
+static/pdfs/*.pdf
+!static/pdfs/.gitkeep
+static/figures/*.png
+static/figures/*.jpg
+static/figures/*.jpeg
+!static/figures/.gitkeep
+static/diagrams/*
+!static/diagrams/.gitkeep
+
+# Backup & temporary scratch files
+*.backup
+*.bak
+scratch_main.js
+test_*.py
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
