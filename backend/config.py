@@ -10,10 +10,28 @@ BACKEND_DIR = BASE_DIR / "backend"
 FRONTEND_DIR = BASE_DIR / "frontend"
 STATIC_DIR = BASE_DIR / "static"
 
-IS_VERCEL = bool(os.getenv("VERCEL"))
+# Robust detection of serverless / read-only environment
+IS_SERVERLESS = (
+    bool(os.getenv("VERCEL"))
+    or bool(os.getenv("VERCEL_ENV"))
+    or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    or bool(os.getenv("LAMBDA_TASK_ROOT"))
+)
 
-if IS_VERCEL:
-    # On Vercel serverless functions, only /tmp is writable
+# Test if local base directory is writable
+def _check_writable(dir_path: Path) -> bool:
+    try:
+        test_file = dir_path / ".test_write_perm"
+        test_file.touch()
+        test_file.unlink()
+        return True
+    except Exception:
+        return False
+
+is_writable = _check_writable(BASE_DIR)
+
+if IS_SERVERLESS or not is_writable:
+    # On serverless (Vercel, AWS Lambda) or read-only container, only /tmp is writable
     TMP_DIR = Path("/tmp")
     AUDIO_DIR = TMP_DIR / "audio"
     PDFS_DIR = TMP_DIR / "pdfs"
@@ -31,7 +49,7 @@ else:
     PDFS_DIR = STATIC_DIR / "pdfs"
     DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'zotero_audio.db'}")
 
-# Ensure directories exist
+# Ensure directories exist safely without raising uncaught exceptions
 try:
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     PDFS_DIR.mkdir(parents=True, exist_ok=True)

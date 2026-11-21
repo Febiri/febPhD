@@ -2,21 +2,25 @@ import os
 import shutil
 import asyncio
 import logging
-import fitz
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, Depends, HTTPException, Query, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, desc, func
 
+try:
+    import fitz  # PyMuPDF
+except (ImportError, Exception):
+    fitz = None
+
 from backend.config import (
     BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
     GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-    ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES
+    ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
 )
 from backend.database import init_db, get_db, Paper
 from backend.zotero_sync import ZoteroSyncService
@@ -33,8 +37,11 @@ ACTIVE_SYNTHESIS_PROGRESS = {}
 ACTIVE_SYNTHESIS_LOCK = set()
 logging.basicConfig(level=logging.INFO)
 
-# Initialize database schema on startup
-init_db()
+# Initialize database schema safely without crashing serverless cold starts
+try:
+    init_db()
+except Exception as e:
+    logger.warning(f"Database initialization warning: {e}")
 
 app = FastAPI(
     title="Zotero Audio Mentor API",
@@ -857,8 +864,42 @@ def get_featured_conferences():
     return scout.search(query="", upcoming_only=True)
 
 
-# Mount static directory for audio/PDF files
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+@app.get("/api/health")
+def api_health():
+    """Health check endpoint to test runtime status."""
+    return {
+        "status": "healthy",
+        "service": "febPhD",
+        "serverless": IS_SERVERLESS,
+        "database": "connected"
+    }
+
+
+# Safely mount static directory if it exists, without crashing if directory is missing
+try:
+    if not STATIC_DIR.exists():
+        STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    if STATIC_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+except Exception as e:
+    logger.warning(f"Static directory could not be mounted: {e}")
+
+
+def _load_html(filename: str) -> Optional[str]:
+    """Search multiple paths for frontend templates and load string content."""
+    candidates = [
+        FRONTEND_DIR / filename,
+        BASE_DIR / "frontend" / filename,
+        Path.cwd() / "frontend" / filename,
+        Path(__file__).resolve().parent.parent / "frontend" / filename,
+    ]
+    for p in candidates:
+        if p.exists():
+            try:
+                return p.read_text(encoding="utf-8")
+            except Exception:
+                pass
+    return None
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -872,9 +913,9 @@ def get_favicon():
 # Serve modern white Home page
 @app.get("/")
 def serve_home():
-    home_path = FRONTEND_DIR / "home.html"
-    if home_path.exists():
-        return FileResponse(str(home_path), media_type="text/html")
+    content = _load_html("home.html")
+    if content:
+        return HTMLResponse(content=content)
     return serve_app()
 
 
@@ -883,9 +924,9 @@ def serve_home():
 @app.get("/scout")
 @app.get("/events")
 def serve_conferences():
-    conf_path = FRONTEND_DIR / "conferences.html"
-    if conf_path.exists():
-        return FileResponse(str(conf_path), media_type="text/html")
+    content = _load_html("conferences.html")
+    if content:
+        return HTMLResponse(content=content)
     return serve_home()
 
 
@@ -894,10 +935,10 @@ def serve_conferences():
 @app.get("/library")
 @app.get("/reader")
 def serve_app():
-    index_path = FRONTEND_DIR / "index.html"
-    if not index_path.exists():
-        return JSONResponse(
-            status_code=404,
-            content={"message": "Frontend index.html not found. Ensure frontend directory is populated."}
-        )
-    return FileResponse(str(index_path), media_type="text/html")
+    content = _load_html("index.html")
+    if content:
+        return HTMLResponse(content=content)
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Frontend index.html not found. Ensure frontend directory is populated."}
+    )

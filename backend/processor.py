@@ -4,7 +4,10 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List, Callable
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except (ImportError, Exception):
+    fitz = None
 import edge_tts
 from google import genai
 from google.genai import types
@@ -26,6 +29,9 @@ class PDFProcessor:
         """
         if not os.path.exists(pdf_path):
             raise FileNotFoundError(f"PDF file not found at: {pdf_path}")
+
+        if fitz is None:
+            raise RuntimeError("PyMuPDF is not installed or available in this serverless environment.")
 
         doc = fitz.open(pdf_path)
         total_pages = len(doc)
@@ -88,6 +94,9 @@ class PDFProcessor:
         """
         if not os.path.exists(pdf_path):
             raise FileNotFoundError(f"PDF file not found at: {pdf_path}")
+
+        if fitz is None:
+            raise RuntimeError("PyMuPDF is not installed or available in this serverless environment.")
 
         doc = fitz.open(pdf_path)
         total_pages = len(doc)

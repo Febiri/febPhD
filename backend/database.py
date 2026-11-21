@@ -4,10 +4,33 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, B
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from backend.config import DATABASE_URL
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-)
+import logging
+
+logger = logging.getLogger("database")
+
+def _create_safe_engine(url: str):
+    try:
+        eng = create_engine(
+            url,
+            connect_args={"check_same_thread": False} if url.startswith("sqlite") else {}
+        )
+        with eng.connect() as conn:
+            pass
+        return eng
+    except Exception as e:
+        logger.warning(f"Failed to initialize database at {url}: {e}")
+        # Try /tmp SQLite first
+        try:
+            tmp_url = "sqlite:////tmp/zotero_audio.db"
+            eng = create_engine(tmp_url, connect_args={"check_same_thread": False})
+            with eng.connect() as conn:
+                pass
+            return eng
+        except Exception:
+            # Fallback to in-memory SQLite
+            return create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+
+engine = _create_safe_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -105,7 +128,12 @@ class Paper(Base):
 
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        logger.warning(f"Warning: could not execute create_all on database: {e}")
+        return
+
     # Automatically migrate SQLite columns if missing
     try:
         with engine.connect() as conn:
