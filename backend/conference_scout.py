@@ -1,13 +1,23 @@
 import os
+import sys
 import json
 import re
 import logging
 from datetime import datetime, date
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from typing import List, Dict, Any, Optional
 from google import genai
 from google.genai import types
 
-from backend.config import GEMINI_API_KEY, GEMINI_MODEL
+try:
+    from backend.config import GEMINI_API_KEY, GEMINI_MODEL
+except ImportError:
+    from config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger("conference_scout")
 logging.basicConfig(level=logging.INFO)

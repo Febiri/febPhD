@@ -1,13 +1,23 @@
 import os
+import sys
 import logging
 from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from typing import List, Dict, Any, Optional
 from pyzotero import zotero
 from pyzotero.zotero_errors import UserNotAuthorisedError, ResourceNotFoundError, HTTPError
 from sqlalchemy.orm import Session
 
-from backend.config import PDFS_DIR, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY, ZOTERO_LIBRARY_TYPE
-from backend.database import Paper
+try:
+    from backend.config import PDFS_DIR, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY, ZOTERO_LIBRARY_TYPE
+    from backend.database import Paper
+except ImportError:
+    from config import PDFS_DIR, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY, ZOTERO_LIBRARY_TYPE
+    from database import Paper
 
 logger = logging.getLogger("zotero_sync")
 logging.basicConfig(level=logging.INFO)

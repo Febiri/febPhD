@@ -1,8 +1,18 @@
 import os
+import sys
 import shutil
 import asyncio
 import logging
 from pathlib import Path
+
+# Ensure root and backend directories are in sys.path
+_CURRENT_DIR = Path(__file__).resolve().parent
+_ROOT_DIR = _CURRENT_DIR.parent
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
+if str(_CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(_CURRENT_DIR))
+
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, Depends, HTTPException, Query, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,18 +27,32 @@ try:
 except (ImportError, Exception):
     fitz = None
 
-from backend.config import (
-    BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
-    GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-    ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
-)
-from backend.database import init_db, get_db, Paper
-from backend.zotero_sync import ZoteroSyncService
-from backend.processor import (
-    PDFProcessor, GeminiSummarizer, AudioSynthesizer,
-    parse_briefing_sections, extract_document_chapters
-)
-from backend.conference_scout import ConferenceScoutService
+try:
+    from backend.config import (
+        BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
+        GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
+    )
+    from backend.database import init_db, get_db, Paper
+    from backend.zotero_sync import ZoteroSyncService
+    from backend.processor import (
+        PDFProcessor, GeminiSummarizer, AudioSynthesizer,
+        parse_briefing_sections, extract_document_chapters
+    )
+    from backend.conference_scout import ConferenceScoutService
+except ImportError:
+    from config import (
+        BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
+        GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
+    )
+    from database import init_db, get_db, Paper
+    from zotero_sync import ZoteroSyncService
+    from processor import (
+        PDFProcessor, GeminiSummarizer, AudioSynthesizer,
+        parse_briefing_sections, extract_document_chapters
+    )
+    from conference_scout import ConferenceScoutService
 
 logger = logging.getLogger("api")
 
@@ -126,7 +150,10 @@ async def execute_processing_pipeline(
     """
     close_db_at_end = False
     if db is None:
-        from backend.database import SessionLocal
+        try:
+            from backend.database import SessionLocal
+        except ImportError:
+            from database import SessionLocal
         db = SessionLocal()
         close_db_at_end = True
 
@@ -499,7 +526,10 @@ async def process_paper(
 
     # Launch processing in background task to avoid client timeouts on long full papers
     async def run_pipeline():
-        from backend.database import SessionLocal
+        try:
+            from backend.database import SessionLocal
+        except ImportError:
+            from database import SessionLocal
         bg_db = SessionLocal()
         try:
             await execute_processing_pipeline(

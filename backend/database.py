@@ -1,8 +1,18 @@
+import sys
+from pathlib import Path
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from datetime import datetime
 from typing import Generator
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from backend.config import DATABASE_URL
+
+try:
+    from backend.config import DATABASE_URL
+except ImportError:
+    from config import DATABASE_URL
 
 import logging
 

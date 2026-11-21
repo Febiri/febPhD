@@ -1,8 +1,14 @@
 import os
+import sys
 import re
 import asyncio
 import logging
 from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from typing import Dict, Any, Optional, Tuple, List, Callable
 try:
     import fitz  # PyMuPDF
@@ -12,7 +18,10 @@ import edge_tts
 from google import genai
 from google.genai import types
 
-from backend.config import AUDIO_DIR, GEMINI_API_KEY, GEMINI_MODEL, DEFAULT_TTS_VOICE
+try:
+    from backend.config import AUDIO_DIR, GEMINI_API_KEY, GEMINI_MODEL, DEFAULT_TTS_VOICE
+except ImportError:
+    from config import AUDIO_DIR, GEMINI_API_KEY, GEMINI_MODEL, DEFAULT_TTS_VOICE
 
 logger = logging.getLogger("processor")
 logging.basicConfig(level=logging.INFO)
