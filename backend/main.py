@@ -926,7 +926,7 @@ def get_featured_conferences():
 
 
 # =====================================================================
-# ENGINE 3: RESEARCH GAP & NOVELTY RADAR ENDPOINT
+# ENGINE 3: RESEARCH GAP & NOVELTY RADAR ENDPOINTS
 # =====================================================================
 @app.post("/api/radar/analyze")
 def analyze_research_gap(payload: RadarAnalysisRequest):
@@ -939,8 +939,69 @@ def analyze_research_gap(payload: RadarAnalysisRequest):
     )
 
 
+@app.post("/api/radar/upload-pdf")
+async def upload_pdf_for_radar(
+    file: UploadFile = File(...),
+    target_domain: Optional[str] = Form("Computer Science")
+):
+    """Extracts topic and proposed methodology from an uploaded proposal or paper PDF and runs novelty gap radar."""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    full_text = ""
+    total_pages = 0
+    extracted_title = ""
+    
+    try:
+        if fitz is not None:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            total_pages = len(doc)
+            meta = doc.metadata or {}
+            extracted_title = meta.get("title") or ""
+            text_parts = []
+            for page in doc:
+                text_parts.append(page.get_text("text"))
+            full_text = "\n\n".join(text_parts).strip()
+            doc.close()
+    except Exception as e:
+        logger.warning(f"Error extracting PDF text for radar: {e}")
+
+    if not full_text:
+        import uuid
+        temp_path = PDFS_DIR / f"radar_{uuid.uuid4().hex[:8]}_{file.filename}"
+        try:
+            with open(temp_path, "wb") as f:
+                f.write(file_bytes)
+            full_text, total_pages = PDFProcessor.extract_verbatim_text(temp_path)
+        except Exception as e:
+            logger.warning(f"Fallback extraction failed: {e}")
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except Exception:
+                    pass
+
+    if not full_text:
+        raise HTTPException(status_code=400, detail="Could not extract readable text from the uploaded PDF.")
+
+    service = ResearchGapService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    result = service.analyze_from_pdf_text(pdf_text=full_text, filename=file.filename, domain=target_domain or "Computer Science")
+    return {
+        "success": True,
+        "filename": file.filename,
+        "total_pages": total_pages,
+        "word_count": len(full_text.split()),
+        "radar": result
+    }
+
+
 # =====================================================================
-# ENGINE 4: AI "REVIEWER #2" SIMULATOR ENDPOINT
+# ENGINE 4: AI "REVIEWER #2" SIMULATOR ENDPOINTS
 # =====================================================================
 @app.post("/api/reviewer/simulate")
 def simulate_reviewer_two(payload: ReviewerRequest):
@@ -952,6 +1013,70 @@ def simulate_reviewer_two(payload: ReviewerRequest):
         methodology=payload.methodology or "",
         target_venue=payload.target_venue or "NeurIPS / IEEE"
     )
+
+
+@app.post("/api/reviewer/upload-pdf")
+async def upload_pdf_for_reviewer(
+    file: UploadFile = File(...),
+    target_venue: Optional[str] = Form("NeurIPS / IEEE")
+):
+    """Audits an uploaded PDF manuscript draft, extracting sections, evaluating methodology, and generating publication improvements."""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    full_text = ""
+    total_pages = 0
+    extracted_title = ""
+    
+    try:
+        if fitz is not None:
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            total_pages = len(doc)
+            meta = doc.metadata or {}
+            extracted_title = meta.get("title") or ""
+            text_parts = []
+            for page in doc:
+                text_parts.append(page.get_text("text"))
+            full_text = "\n\n".join(text_parts).strip()
+            doc.close()
+    except Exception as e:
+        logger.warning(f"Error extracting PDF text for reviewer: {e}")
+
+    if not full_text:
+        import uuid
+        temp_path = PDFS_DIR / f"rev_{uuid.uuid4().hex[:8]}_{file.filename}"
+        try:
+            with open(temp_path, "wb") as f:
+                f.write(file_bytes)
+            full_text, total_pages = PDFProcessor.extract_verbatim_text(temp_path)
+        except Exception as e:
+            logger.warning(f"Fallback extraction failed: {e}")
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except Exception:
+                    pass
+
+    if not full_text:
+        raise HTTPException(status_code=400, detail="Could not extract readable text from the uploaded PDF.")
+
+    if not extracted_title:
+        extracted_title = file.filename.replace(".pdf", "").replace("_", " ").title()
+
+    service = ReviewerSimulatorService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    result = service.review_full_manuscript(full_text=full_text, title=extracted_title, target_venue=target_venue or "NeurIPS / IEEE")
+    return {
+        "success": True,
+        "filename": file.filename,
+        "total_pages": total_pages,
+        "word_count": len(full_text.split()),
+        "review": result
+    }
 
 
 # =====================================================================
