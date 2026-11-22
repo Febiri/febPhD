@@ -44,7 +44,11 @@ try:
         ResearchGapService, ReviewerSimulatorService,
         FundingScoutService, IndustryLabService
     )
-    from backend.twin_agent import TwinAgentService, PortfolioSyncService
+    try:
+        from backend.twin_agent import TwinAgentService, PortfolioSyncService
+    except Exception as _e:
+        TwinAgentService = None
+        PortfolioSyncService = None
 except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
@@ -62,7 +66,11 @@ except ImportError:
         ResearchGapService, ReviewerSimulatorService,
         FundingScoutService, IndustryLabService
     )
-    from twin_agent import TwinAgentService, PortfolioSyncService
+    try:
+        from twin_agent import TwinAgentService, PortfolioSyncService
+    except Exception as _e:
+        TwinAgentService = None
+        PortfolioSyncService = None
 
 logger = logging.getLogger("api")
 
@@ -1179,6 +1187,8 @@ def post_labs(payload: LabSearchRequest):
 @app.get("/api/twin/profile")
 def get_twin_profile():
     """Returns Mark Febiri's digital twin knowledge base, synced with febmac.vercel.app."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     return service.get_profile()
 
@@ -1186,12 +1196,16 @@ def get_twin_profile():
 @app.post("/api/twin/sync")
 def sync_twin_portfolio(payload: TwinSyncRequest = TwinSyncRequest()):
     """Live re-crawls Mark Febiri's portfolio website to refresh profile knowledge."""
+    if not PortfolioSyncService:
+        raise HTTPException(status_code=503, detail="PortfolioSyncService unavailable")
     return PortfolioSyncService.live_sync(base_url=payload.url or "https://febmac.vercel.app")
 
 
 @app.post("/api/twin/update-profile")
 def update_twin_profile(payload: TwinUpdateRequest):
     """Updates custom research notes or active focus for the Digital Twin."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     return service.update_profile(custom_notes=payload.custom_notes, active_focus=payload.active_focus)
 
@@ -1199,6 +1213,8 @@ def update_twin_profile(payload: TwinUpdateRequest):
 @app.post("/api/twin/apply-grant")
 def twin_apply_grant(payload: TwinApplyGrantRequest):
     """Autonomous drafter: creates complete grant/fellowship dossier on Mark's behalf."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     return service.apply_for_grant(grant_title=payload.grant_title, grant_details=payload.grant_details or {})
 
@@ -1206,6 +1222,8 @@ def twin_apply_grant(payload: TwinApplyGrantRequest):
 @app.post("/api/twin/apply-lab")
 def twin_apply_lab(payload: TwinApplyLabRequest):
     """Autonomous drafter: creates complete research lab internship pitch & cold email on Mark's behalf."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     return service.apply_for_lab(lab_title=payload.lab_title, lab_details=payload.lab_details or {})
 
@@ -1213,6 +1231,8 @@ def twin_apply_lab(payload: TwinApplyLabRequest):
 @app.get("/api/twin/suggestions")
 def get_twin_suggestions():
     """Proactive strategic advisor: returns prioritized actions Mark should take over the next 14-60 days."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     return service.get_strategic_suggestions()
 
@@ -1220,6 +1240,8 @@ def get_twin_suggestions():
 @app.post("/api/twin/chat")
 def chat_with_twin(payload: TwinChatRequest):
     """Interactive chat with Mark Febiri's perfectionist digital twin."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     response_text = service.chat_with_twin(user_message=payload.message, chat_history=payload.history or [])
     return {"reply": response_text}

@@ -6,7 +6,10 @@ import urllib.request
 from typing import Dict, Any, List, Optional
 from datetime import datetime, date
 from pathlib import Path
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+except Exception:
+    BeautifulSoup = None
 
 try:
     from google import genai
@@ -16,14 +19,25 @@ except ImportError:
     types = None
 
 try:
-    from backend.config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS
+    from backend.config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable
 except ImportError:
-    from config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS
+    try:
+        from config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable
+    except ImportError:
+        GEMINI_API_KEY = ""
+        GEMINI_MODEL = "gemini-2.5-flash"
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        IS_SERVERLESS = True
+        is_writable = False
 
 logger = logging.getLogger("twin_agent")
 logging.basicConfig(level=logging.INFO)
 
-PROFILE_CACHE_PATH = Path("/tmp/mark_febiri_profile.json") if IS_SERVERLESS else BASE_DIR / "data" / "mark_febiri_profile.json"
+PROFILE_CACHE_PATH = (
+    Path("/tmp/mark_febiri_profile.json")
+    if (IS_SERVERLESS or not is_writable)
+    else BASE_DIR / "data" / "mark_febiri_profile.json"
+)
 
 # Master curated knowledge dossier for Mark Febiri (Synced from https://febmac.vercel.app/)
 MASTER_PROFILE: Dict[str, Any] = {
@@ -144,10 +158,15 @@ class PortfolioSyncService:
                 req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
                 with urllib.request.urlopen(req, timeout=8) as resp:
                     html = resp.read().decode("utf-8", errors="ignore")
-                    soup = BeautifulSoup(html, "html.parser")
-                    for s in soup(["script", "style", "nav", "footer"]):
-                        s.decompose()
-                    text = " ".join(soup.get_text().split())
+                    if BeautifulSoup is not None:
+                        soup = BeautifulSoup(html, "html.parser")
+                        for s in soup(["script", "style", "nav", "footer"]):
+                            s.decompose()
+                        text = " ".join(soup.get_text().split())
+                    else:
+                        cleaned = re.sub(r"<(script|style|nav|footer)[^>]*>.*?</\1>", " ", html, flags=re.DOTALL | re.IGNORECASE)
+                        cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+                        text = " ".join(cleaned.split())
                     crawled_snippets[p] = text[:2000]
             except Exception as e:
                 logger.warning(f"Failed to crawl {url}: {e}")
