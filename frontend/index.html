@@ -723,6 +723,9 @@
           <button id="tab-abstract" onclick="switchModalTab('abstract')" class="px-3 py-1 text-xs font-medium rounded-lg text-slate-400 hover:text-white shrink-0 transition">
             Abstract & PDF
           </button>
+          <button id="tab-chat" onclick="switchModalTab('chat')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-brand-500/20 text-brand-300 hover:text-white shrink-0 transition flex items-center gap-1">
+            <span>💬 Ask AI Mentor</span>
+          </button>
         </div>
       </div>
 
@@ -903,6 +906,66 @@
           <div class="w-full pt-2">
             <iframe id="fullpaper-pdf-frame" src="" class="w-full h-[600px] rounded-xl border border-dark-750 bg-white shadow-inner"></iframe>
           </div>
+        </div>
+
+        <!-- View 6: Interactive AI Mentor Chat -->
+        <div id="view-chat" class="hidden flex flex-col h-[650px] space-y-3">
+          <div class="flex items-center justify-between pb-3 border-b border-dark-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>💬 Conversational Research Mentor & Paper Co-Pilot</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">Dynamic AI</span>
+              </h3>
+              <p class="text-[11px] text-slate-400">Ask any question about this paper's equations, methodology, proofs, baseline comparisons, or PhD thesis extensions.</p>
+            </div>
+            <button onclick="clearPaperChat()" class="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-dark-800 border border-dark-700 transition">
+              Clear
+            </button>
+          </div>
+
+          <!-- Quick Suggestion Chips -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button onclick="sendQuickPaperPrompt('Explain the core methodology and theoretical intuition in simple terms.')" class="px-2.5 py-1 rounded-lg bg-dark-850 hover:bg-dark-800 border border-dark-750 text-[11px] text-slate-300 hover:text-white transition">
+              💡 Explain methodology simply
+            </button>
+            <button onclick="sendQuickPaperPrompt('What are the critical limitations and unstated assumptions in this paper?')" class="px-2.5 py-1 rounded-lg bg-dark-850 hover:bg-dark-800 border border-dark-750 text-[11px] text-slate-300 hover:text-white transition">
+              ⚖️ Critical limitations & assumptions
+            </button>
+            <button onclick="sendQuickPaperPrompt('Summarize the empirical results, baselines, and statistical variance.')" class="px-2.5 py-1 rounded-lg bg-dark-850 hover:bg-dark-800 border border-dark-750 text-[11px] text-slate-300 hover:text-white transition">
+              📊 Empirical results & baselines
+            </button>
+            <button onclick="sendQuickPaperPrompt('How could I extend this paper\'s architecture into my own PhD research?')" class="px-2.5 py-1 rounded-lg bg-dark-850 hover:bg-dark-800 border border-dark-750 text-[11px] text-slate-300 hover:text-white transition">
+              🔬 Ideas to extend for my PhD
+            </button>
+          </div>
+
+          <!-- Chat Messages Scroll Container -->
+          <div id="paper-chat-messages" class="flex-1 overflow-y-auto space-y-3 p-4 rounded-2xl bg-dark-950/80 border border-dark-800 text-xs">
+            <div class="flex items-start gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-[10px] shrink-0">AI</span>
+              <div class="p-3.5 rounded-2xl bg-dark-850 text-slate-200 border border-dark-750 leading-relaxed max-w-xl">
+                Hello! I am your AI Research Mentor for this paper. I have analyzed the title, abstract, 4-part breakdown, and full manuscript text. What would you like to explore or question about this paper?
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input Form -->
+          <form onsubmit="event.preventDefault(); sendPaperChatMessage();" class="pt-2 flex items-center gap-2 shrink-0">
+            <input 
+              type="text" 
+              id="paper-chat-input"
+              placeholder="Ask the AI Mentor about formulas, baselines, proof steps, or future extensions..."
+              class="flex-1 px-4 py-2.5 rounded-xl bg-dark-850 border border-dark-750 focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs text-white placeholder-slate-500"
+            >
+            <button 
+              type="submit" 
+              id="paper-chat-send-btn"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1"
+            >
+              <span>Ask</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </form>
         </div>
 
       </div>
@@ -2959,7 +3022,7 @@
     }
 
     function switchModalTab(tab) {
-      ['breakdown', 'fulltext', 'figures', 'script', 'abstract'].forEach(t => {
+      ['breakdown', 'fulltext', 'figures', 'script', 'abstract', 'chat'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const tabBtn = document.getElementById(`tab-${t}`);
         if (view) view.classList.add('hidden');
@@ -2969,6 +3032,72 @@
       const activeTabBtn = document.getElementById(`tab-${tab}`);
       if (activeView) activeView.classList.remove('hidden');
       if (activeTabBtn) activeTabBtn.className = 'px-3 py-1 text-xs font-semibold rounded-lg bg-dark-800 text-white shrink-0 transition';
+    }
+
+    let paperChatHistory = [];
+
+    function clearPaperChat() {
+      paperChatHistory = [];
+      const container = document.getElementById('paper-chat-messages');
+      if (container) {
+        container.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-[10px] shrink-0">AI</span>
+            <div class="p-3.5 rounded-2xl bg-dark-850 text-slate-200 border border-dark-750 leading-relaxed max-w-xl">
+              Chat reset. What question do you have about this paper?
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function sendQuickPaperPrompt(promptText) {
+      const inp = document.getElementById('paper-chat-input');
+      if (inp) {
+        inp.value = promptText;
+        sendPaperChatMessage();
+      }
+    }
+
+    async function sendPaperChatMessage() {
+      if (!activeModalPaper) return;
+      const input = document.getElementById('paper-chat-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      input.value = '';
+
+      appendPaperChatMessage('user', text);
+      const btn = document.getElementById('paper-chat-send-btn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/papers/${activeModalPaper.id}/chat`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message: text, history: paperChatHistory })
+        });
+        const data = await res.json();
+        appendPaperChatMessage('assistant', data.reply || 'No response generated.');
+      } catch (err) {
+        appendPaperChatMessage('assistant', 'Error communicating with AI Mentor: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function appendPaperChatMessage(role, content) {
+      paperChatHistory.push({ role, content });
+      const container = document.getElementById('paper-chat-messages');
+      if (!container) return;
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
+      div.innerHTML = `
+        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-700 text-white' : 'bg-brand-500/20 text-brand-400'} flex items-center justify-center font-bold text-[10px] shrink-0">${isUser ? 'YOU' : 'AI'}</span>
+        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-brand-600 text-white' : 'bg-dark-850 text-slate-200 border border-dark-750'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
     }
 
     function playModalTrack(mode) {

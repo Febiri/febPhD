@@ -464,6 +464,65 @@
         <pre id="revised-draft-preview" class="p-5 rounded-2xl bg-slate-900 text-slate-200 text-xs font-mono leading-relaxed overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap selection:bg-rose-500 selection:text-white"></pre>
       </div>
 
+      <!-- LIVE AUTHOR REBUTTAL COACH & INTERACTIVE Q&A -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[11px] font-mono font-bold mb-1 border border-purple-200">
+              💬 DYNAMIC AI DEFENSE
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Live Rebuttal Coach & Reviewer #2 Q&A</h3>
+            <p class="text-xs text-slate-500">Test your defense arguments in real-time or ask the coach to generate publication-grade rebuttal paragraphs.</p>
+          </div>
+          <button onclick="clearRebuttalChat()" class="text-xs text-slate-400 hover:text-slate-700 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 transition">
+            Clear Chat
+          </button>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="sendQuickRebuttalPrompt('How should I rebut Reviewer #2\'s critique about missing contemporary SOTA baselines?')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            🥊 Defend against baseline critique
+          </button>
+          <button onclick="sendQuickRebuttalPrompt('Draft an author response defending our ablation studies and component isolation.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            🔬 Defend ablation studies
+          </button>
+          <button onclick="sendQuickRebuttalPrompt('Draft the formal, respectful opening statement of our conference rebuttal letter.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            ✉️ Draft formal rebuttal opening
+          </button>
+          <button onclick="sendQuickRebuttalPrompt('What lightweight experiment can we run in 48 hours to decisively flip this score to an Accept?')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            ⚡ 48-hour experiment to flip to Accept
+          </button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="rebuttal-chat-messages" class="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 max-h-80 overflow-y-auto text-xs">
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">R2</span>
+            <div class="p-3.5 rounded-2xl bg-white text-slate-800 border border-slate-200 shadow-xs leading-relaxed max-w-xl">
+              I am your Rebuttal Defense Coach. I have internalized Reviewer #2's critique of your manuscript. Ask me how to answer any tough question, defend your methodology, or generate point-by-point rebuttal text.
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Form -->
+        <form onsubmit="event.preventDefault(); sendRebuttalChatMessage();" class="flex items-center gap-2 pt-1">
+          <input 
+            type="text" 
+            id="rebuttal-chat-input"
+            placeholder="Ask how to rebut specific weaknesses, request exact rebuttal phrasing, or defend assumptions..."
+            class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-xs"
+          >
+          <button 
+            type="submit" 
+            id="rebuttal-send-btn"
+            class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1 shrink-0"
+          >
+            <span>Send</span>
+          </button>
+        </form>
+      </div>
+
     </div>
 
   </main>
@@ -625,6 +684,7 @@
       }
 
       latestPaperTitle = data.extracted_title || document.getElementById('rev-title').value.trim() || 'Revised_Paper';
+      latestCritiqueData = data;
 
       document.getElementById('rev-verdict').textContent = data.verdict || 'Borderline / Weak Reject';
       document.getElementById('rev-scale').textContent = `Score: ${data.overall_score || 5} / 10`;
@@ -720,6 +780,77 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    let rebuttalChatHistory = [];
+    let latestCritiqueData = {};
+
+    function clearRebuttalChat() {
+      rebuttalChatHistory = [];
+      const container = document.getElementById('rebuttal-chat-messages');
+      if (container) {
+        container.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">R2</span>
+            <div class="p-3.5 rounded-2xl bg-white text-slate-800 border border-slate-200 shadow-xs leading-relaxed max-w-xl">
+              Chat cleared. Ask me how to answer any critique, defend assumptions, or format rebuttal responses.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function sendQuickRebuttalPrompt(text) {
+      const inp = document.getElementById('rebuttal-chat-input');
+      if (inp) {
+        inp.value = text;
+        sendRebuttalChatMessage();
+      }
+    }
+
+    async function sendRebuttalChatMessage() {
+      const input = document.getElementById('rebuttal-chat-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      input.value = '';
+
+      appendRebuttalMessage('user', text);
+      const btn = document.getElementById('rebuttal-send-btn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/reviewer/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            paper_title: latestPaperTitle,
+            critique: latestCritiqueData,
+            message: text,
+            history: rebuttalChatHistory
+          })
+        });
+        const data = await res.json();
+        appendRebuttalMessage('assistant', data.reply || 'Rebuttal guidance prepared.');
+      } catch (err) {
+        appendRebuttalMessage('assistant', 'Error communicating with Rebuttal Coach: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function appendRebuttalMessage(role, content) {
+      rebuttalChatHistory.push({ role, content });
+      const container = document.getElementById('rebuttal-chat-messages');
+      if (!container) return;
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
+      div.innerHTML = `
+        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-800 text-white' : 'bg-rose-100 text-rose-700'} flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">${isUser ? 'YOU' : 'R2'}</span>
+        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-rose-600 text-white' : 'bg-white text-slate-800 border border-slate-200 shadow-xs'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
     }
 
     function generateDefaultSuggestions(title) {

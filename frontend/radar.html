@@ -320,6 +320,65 @@
         <p class="text-xs text-slate-500 mb-6">Step-by-step doctoral validation roadmap to execute before your next paper submission.</p>
         <div id="roadmap-list" class="space-y-4"></div>
       </div>
+
+      <!-- DYNAMIC AI RESEARCH GAP DEEP-DIVE -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 text-[11px] font-mono font-bold mb-1 border border-brand-200">
+              💬 NOVELTY CO-PILOT
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Gap Deep-Dive & Architecture Workshop</h3>
+            <p class="text-xs text-slate-500">Brainstorm concrete mathematical formulations, ablation designs, and baseline datasets with the Novelty Advisor.</p>
+          </div>
+          <button onclick="clearRadarChat()" class="text-xs text-slate-400 hover:text-slate-700 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 transition">
+            Clear
+          </button>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="sendQuickRadarPrompt('Propose a concrete mathematical loss function and architecture formulation for Gap 1.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            📐 Formulate loss function for Gap 1
+          </button>
+          <button onclick="sendQuickRadarPrompt('What publicly available datasets on HuggingFace can I evaluate this novel hypothesis on?')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            📊 Recommend evaluation datasets
+          </button>
+          <button onclick="sendQuickRadarPrompt('How can I prove this method outperforms standard Transformers with lower compute?')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            ⚡ Prove compute-efficiency over SOTA
+          </button>
+          <button onclick="sendQuickRadarPrompt('Which Tier-1 conference tracks (e.g. NeurIPS, ICML, CVPR, ICLR) are the best fit for this idea?')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
+            🌐 Best Tier-1 conference tracks
+          </button>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="radar-chat-messages" class="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 max-h-80 overflow-y-auto text-xs">
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">NV</span>
+            <div class="p-3.5 rounded-2xl bg-white text-slate-800 border border-slate-200 shadow-xs leading-relaxed max-w-xl">
+              Hello researcher! I have analyzed the novelty landscape, benchmark ceilings, and open gaps for this topic. How can I help you design the architecture or validation experiments?
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form onsubmit="event.preventDefault(); sendRadarChatMessage();" class="flex items-center gap-2 pt-1">
+          <input 
+            type="text" 
+            id="radar-chat-input"
+            placeholder="Ask about equations, baseline comparisons, dataset selection, or proof techniques..."
+            class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs"
+          >
+          <button 
+            type="submit" 
+            id="radar-send-btn"
+            class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1 shrink-0"
+          >
+            <span>Ask</span>
+          </button>
+        </form>
+      </div>
     </div>
 
   </main>
@@ -462,6 +521,8 @@
     }
 
     function renderResults(data, meta = null) {
+      latestRadarData = data;
+      latestRadarTopic = data.topic || document.getElementById('topic-input').value.trim() || 'Research Idea';
       document.getElementById('results-container').classList.remove('hidden');
 
       const metaBanner = document.getElementById('radar-meta-banner');
@@ -521,6 +582,78 @@
       `).join('');
 
       document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    let radarChatHistory = [];
+    let latestRadarData = {};
+    let latestRadarTopic = "";
+
+    function clearRadarChat() {
+      radarChatHistory = [];
+      const container = document.getElementById('radar-chat-messages');
+      if (container) {
+        container.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">NV</span>
+            <div class="p-3.5 rounded-2xl bg-white text-slate-800 border border-slate-200 shadow-xs leading-relaxed max-w-xl">
+              Chat cleared. What aspect of the research gaps or architecture would you like to explore?
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function sendQuickRadarPrompt(text) {
+      const inp = document.getElementById('radar-chat-input');
+      if (inp) {
+        inp.value = text;
+        sendRadarChatMessage();
+      }
+    }
+
+    async function sendRadarChatMessage() {
+      const input = document.getElementById('radar-chat-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      input.value = '';
+
+      appendRadarMessage('user', text);
+      const btn = document.getElementById('radar-send-btn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/radar/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            topic: latestRadarTopic,
+            radar_result: latestRadarData,
+            message: text,
+            history: radarChatHistory
+          })
+        });
+        const data = await res.json();
+        appendRadarMessage('assistant', data.reply || 'Analysis formulated.');
+      } catch (err) {
+        appendRadarMessage('assistant', 'Error communicating with Novelty Advisor: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function appendRadarMessage(role, content) {
+      radarChatHistory.push({ role, content });
+      const container = document.getElementById('radar-chat-messages');
+      if (!container) return;
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
+      div.innerHTML = `
+        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'} flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">${isUser ? 'YOU' : 'NV'}</span>
+        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-brand-600 text-white' : 'bg-white text-slate-800 border border-slate-200 shadow-xs'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
     }
 
     function generateClientGapFallback(topic, idea) {

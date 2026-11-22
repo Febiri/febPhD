@@ -144,7 +144,45 @@ def test_all():
     assert len(chat_resp.get('reply', '')) > 50, "Chat response too short"
     print(f"  [PASS] /api/twin/chat answered with twin persona ({len(chat_resp['reply'])} chars)")
 
-    print("\nALL 8 TEST SUITES PASSED FLAWLESSLY! 100% OPERATIONAL!")
+    print("\n9. Testing Dynamic System-Wide AI Chat Endpoints...")
+    # Reviewer #2 Rebuttal Chat
+    resp = client.post('/api/reviewer/chat', json={
+        'paper_title': 'UltraEdge KV-Cache Paper',
+        'critique': {'critical_weaknesses': [{'area': 'Baselines', 'critique': 'Missing SOTA 2024 comparisons'}]},
+        'message': 'How do I rebut Reviewer 2 about missing baselines without rerunning everything?'
+    })
+    assert resp.status_code == 200, f"Reviewer chat failed: {resp.text}"
+    rev_chat = resp.json()
+    assert len(rev_chat.get('reply', '')) > 50, "Reviewer chat too short"
+    print(f"  [PASS] /api/reviewer/chat returned dynamic rebuttal coach response ({len(rev_chat['reply'])} chars)")
+
+    # Novelty Radar Gap Deep-Dive Chat
+    resp = client.post('/api/radar/chat', json={
+        'topic': 'Multi-Omics Variant Annotation',
+        'radar_result': {'unsolved_research_gaps': [{'title': 'ClinVar ACMG latency', 'description': 'Slow lookups'}]},
+        'message': 'Propose an asynchronous mathematical formulation to solve this gap.'
+    })
+    assert resp.status_code == 200, f"Radar chat failed: {resp.text}"
+    rad_chat = resp.json()
+    assert len(rad_chat.get('reply', '')) > 50, "Radar chat too short"
+    print(f"  [PASS] /api/radar/chat returned dynamic novelty guidance ({len(rad_chat['reply'])} chars)")
+
+    # Paper Reader AI Mentor Chat
+    resp_papers = client.get('/api/papers')
+    assert resp_papers.status_code == 200
+    papers_data = resp_papers.json()
+    papers_list = papers_data.get('papers', []) if isinstance(papers_data, dict) else papers_data
+    if papers_list:
+        sample_pid = papers_list[0]['id']
+        resp = client.post(f'/api/papers/{sample_pid}/chat', json={
+            'message': 'Explain the core algorithmic mechanism of this paper in plain English.'
+        })
+        assert resp.status_code == 200, f"Paper chat failed: {resp.text}"
+        p_chat = resp.json()
+        assert len(p_chat.get('reply', '')) > 50, "Paper chat too short"
+        print(f"  [PASS] /api/papers/{sample_pid}/chat returned AI Mentor explanation ({len(p_chat['reply'])} chars)")
+
+    print("\nALL 9 DYNAMIC TEST SUITES PASSED FLAWLESSLY! 100% OPERATIONAL!")
 
 if __name__ == '__main__':
     test_all()

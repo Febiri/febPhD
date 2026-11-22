@@ -767,6 +767,24 @@
     window.addEventListener('DOMContentLoaded', () => {
       populatePresets();
       loadBrainProfile();
+
+      const params = new URLSearchParams(window.location.search);
+      const applyMode = params.get('apply_mode');
+      const title = params.get('title');
+      const org = params.get('org');
+      const autogen = params.get('autogen');
+
+      if (applyMode && title) {
+        switchStudioTab('apply');
+        switchApplyMode(applyMode);
+        document.getElementById('preset-select').value = 'custom';
+        document.getElementById('custom-fields').classList.remove('hidden');
+        document.getElementById('custom-target-title').value = title;
+        document.getElementById('custom-target-org').value = org || '';
+        if (autogen === 'true') {
+          setTimeout(() => generateApplication(), 400);
+        }
+      }
     });
   </script>
 

@@ -190,6 +190,25 @@ class TwinChatRequest(BaseModel):
     history: Optional[List[Dict[str, str]]] = []
 
 
+class PaperChatRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
+
+
+class ReviewerChatRequest(BaseModel):
+    paper_title: str
+    critique: Optional[Dict[str, Any]] = {}
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
+
+
+class RadarChatRequest(BaseModel):
+    topic: str
+    radar_result: Optional[Dict[str, Any]] = {}
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
+
+
 # Core Pipeline Execution Helper
 async def execute_processing_pipeline(
     paper_id: int,
@@ -563,6 +582,31 @@ def extract_paper_text(paper_id: int, db: Session = Depends(get_db)):
         }
     else:
         raise HTTPException(status_code=400, detail="No PDF file or abstract available for text extraction.")
+
+
+@app.post("/api/papers/{paper_id}/chat")
+def chat_with_paper_endpoint(paper_id: int, payload: PaperChatRequest, db: Session = Depends(get_db)):
+    """Dynamic conversational AI mentor to ask questions and chat with a research paper."""
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    summarizer = GeminiSummarizer(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    breakdown = {
+        "problem": paper.summary_problem or "",
+        "methodology": paper.summary_methodology or "",
+        "results": paper.summary_results or "",
+        "limitations": paper.summary_limitations or ""
+    }
+    reply = summarizer.chat_with_paper(
+        title=paper.title or "Research Paper",
+        abstract=paper.abstract or "",
+        full_text=paper.full_text or "",
+        breakdown_sections=breakdown,
+        user_question=payload.message,
+        history=payload.history or []
+    )
+    return {"reply": reply, "paper_title": paper.title}
 
 
 @app.post("/api/process/{item_key_or_id}")
@@ -1038,6 +1082,19 @@ async def upload_pdf_for_radar(
     }
 
 
+@app.post("/api/radar/chat")
+def chat_radar_endpoint(payload: RadarChatRequest):
+    """Dynamic interactive deep-dive into research gaps and technical architecture."""
+    service = ResearchGapService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    reply = service.chat_gap_deep_dive(
+        topic=payload.topic,
+        radar_result=payload.radar_result or {},
+        user_message=payload.message,
+        chat_history=payload.history or []
+    )
+    return {"reply": reply}
+
+
 # =====================================================================
 # ENGINE 4: AI "REVIEWER #2" SIMULATOR ENDPOINTS
 # =====================================================================
@@ -1115,6 +1172,19 @@ async def upload_pdf_for_reviewer(
         "word_count": len(full_text.split()),
         "review": result
     }
+
+
+@app.post("/api/reviewer/chat")
+def chat_reviewer_endpoint(payload: ReviewerChatRequest):
+    """Dynamic author rebuttal coach & interactive follow-up with Reviewer #2."""
+    service = ReviewerSimulatorService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    reply = service.chat_rebuttal(
+        paper_title=payload.paper_title,
+        critique=payload.critique or {},
+        user_message=payload.message,
+        chat_history=payload.history or []
+    )
+    return {"reply": reply}
 
 
 # =====================================================================

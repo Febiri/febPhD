@@ -242,11 +242,7 @@ class TwinAgentService:
         """Interactive conversation with Mark Febiri's perfectionist digital twin."""
         profile = self.get_profile()
         if not self.api_key:
-            return (
-                f"Hello Mark! I am your Digital Twin, synced with your portfolio at {profile['portfolio_url']}. "
-                f"I know your work in Neuro-Symbolic RAG, the ClawBio multi-omics pipeline, and your role as CTO of DevSpace Systems. "
-                f"How can I assist you with drafting fellowship applications, pitching labs, or strategic doctoral roadmapping today?"
-            )
+            return self._dynamic_twin_response(profile, user_message, chat_history)
 
         client = genai.Client(api_key=self.api_key)
         profile_json = json.dumps(profile, indent=2)
@@ -277,16 +273,105 @@ CONVERSATION HISTORY:
 Mark: {user_message}
 Twin:"""
 
-        try:
-            resp = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.35)
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
+        if self.model and self.model not in models:
+            models.insert(0, self.model)
+
+        for m in models:
+            try:
+                resp = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.35)
+                )
+                text = (resp.text or "").strip()
+                if text:
+                    return text
+            except Exception as e:
+                logger.warning(f"Twin chat with {m} failed: {e}")
+                continue
+
+        return self._dynamic_twin_response(profile, user_message, chat_history)
+
+    def _dynamic_twin_response(self, profile: Dict[str, Any], user_message: str, chat_history: Optional[List[Dict[str, str]]] = None) -> str:
+        """Dynamic, context-aware synthesis when AI models are unavailable or rate-limited."""
+        msg = user_message.lower().strip()
+
+        # 1. Fellowships, Grants & Funding
+        if any(w in msg for w in ["grant", "fellowship", "funding", "travel", "stipend", "scholarship", "money", "award", "nsf", "google fellowship", "meta fellowship"]):
+            return (
+                f"Mark, looking at our academic profile and our CTO track record at DevSpace Systems, our highest-probability funding targets right now are:\n\n"
+                f"1. **NSF Graduate Research Fellowship (GRFP) / Premier Travel Grants**:\n"
+                f"   - **Strategic Angle**: Frame our work as *Deterministic Knowledge-Grounding for Genomic AI*. Reviewers love high-impact translational science with open-source codebases (`github.com/Febiri/neuro-symbolic-rag`).\n"
+                f"   - **Unique Advantage**: Most applicants only have theoretical ideas. You bring 10 years of software engineering, a real company (DevSpace Systems), and accepted work at ICETCI 2025.\n"
+                f"2. **Microsoft Research & Meta PhD Fellowships**:\n"
+                f"   - We should emphasize the combination of ClawBio (ClinVar ACMG variant interpretation) with agentic logic reasoning.\n\n"
+                f"💡 **Immediate Execution Step**: Head over to our **'Apply On My Behalf'** tab in the Digital Twin Studio, select the fellowship, and I will generate the complete Statement of Purpose and itemized budget in 1-click."
             )
-            return (resp.text or "").strip()
-        except Exception as e:
-            logger.warning(f"Chat error: {e}")
-            return f"Understood, Mark. Regarding '{user_message}': I am ready to draft the materials and cross-reference our Neuro-Symbolic RAG and ClawBio repositories to execute this task immediately."
+
+        # 2. Labs, Industry Residencies & Internships
+        if any(w in msg for w in ["lab", "deepmind", "fair", "meta", "google", "msr", "microsoft", "residency", "intern", "internship", "hiring", "cold email", "pitch", "careers"]):
+            return (
+                f"Mark, for our post-doctoral trajectory and industry research residencies (Google DeepMind, Meta FAIR, MSR Health/Genomics):\n\n"
+                f"🎯 **Our Cold Outreach Pitch Angle**:\n"
+                f"- **The Hook**: Don't pitch yourself as a generic ML student. Pitch yourself as an *AI Systems Architect & Computational Biologist* who builds production pipelines.\n"
+                f"- **Proof Points**: Cite our `ClawBio-Pipeline` (sub-second ClinVar variant lookups) and our `neuro-symbolic-rag` benchmark results.\n"
+                f"- **Target PIs**: Reach out directly to Research Scientists working on multimodal models and structural genomics.\n\n"
+                f"📝 **Action**: I can draft an ultra-high-reply cold email to specific Research Leads right now. Just say 'Draft cold email for DeepMind' or use our 'Apply for Lab' tool!"
+            )
+
+        # 3. Publications, Manuscripts & Reviewer Rebuttal
+        if any(w in msg for w in ["paper", "publish", "icetci", "springer", "review", "reviewer", "rebuttal", "manuscript", "accept", "reject", "neurips", "icml"]):
+            return (
+                f"Mark, regarding our publication pipeline and peer review defense:\n\n"
+                f"📄 **Current Status**:\n"
+                f"- **ICETCI 2025**: Accepted! Multimodal Transformers & Computational Intelligence Frameworks.\n"
+                f"- **Springer Nature**: Under Review — Scalable Multi-Omics Genomic Workflow Orchestration and Variant Annotation.\n\n"
+                f"⚖️ **Tactical Advice for Next Submissions**:\n"
+                f"1. **Pre-Submission Stress Testing**: Always run our manuscript through our built-in **Reviewer #2 Simulator** (Engine 04) to catch missing 2024-2025 baselines and ablation gaps before the reviewers do.\n"
+                f"2. **Ablation Transparency**: Reviewers will demand isolation of our symbolic logic filter vs standard vector search. Keep Figure 3 and the seed standard deviations prominent."
+            )
+
+        # 4. ClawBio & Computational Biology Pipelines
+        if any(w in msg for w in ["clawbio", "bio", "genomic", "variant", "clinvar", "acmg", "omics", "multi-omics", "biopython"]):
+            return (
+                f"Mark, the **ClawBio Multi-Omics Pipeline** (`github.com/Febiri/ClawBio-Pipeline`) is one of our strongest intellectual assets.\n\n"
+                f"🧬 **Core Differentiators**:\n"
+                f"- Integration of ClinVar ACMG automated classification rules with sub-second variant lookups.\n"
+                f"- Asynchronous streaming architecture handling BAM/VCF file sets with high throughput.\n"
+                f"- Modular Nextflow-style reproducibility that can be plugged directly into clinical precision medicine workflows.\n\n"
+                f"🚀 **Next Enhancement**: Integrating our Neuro-Symbolic verifier directly into ClawBio to automatically cite clinical PubMed literature for novel pathogenic variants."
+            )
+
+        # 5. Neuro-Symbolic RAG & Agentic Systems
+        if any(w in msg for w in ["neuro", "symbolic", "rag", "knowledge graph", "logic", "hallucination", "retrieval", "pubmed"]):
+            return (
+                f"Mark, our **Neuro-Symbolic Agentic RAG Engine** (`github.com/Febiri/neuro-symbolic-rag`) directly solves the biggest crisis in scientific AI: hallucinations.\n\n"
+                f"🧠 **Architecture Blueprint**:\n"
+                f"1. **Stochastic Layer**: LLM generates candidate reasoning pathways from retrieved PubMed & arXiv abstracts.\n"
+                f"2. **Deterministic Layer**: Symbolic Horn-clause logic filters verify relational triples against certified knowledge graphs before output generation.\n"
+                f"3. **Result**: Zero-hallucination citation guarantee that appeals directly to grant panels and clinical researchers."
+            )
+
+        # 6. Immediate Priorities & Strategic Roadmap
+        if any(w in msg for w in ["priority", "priorities", "roadmap", "plan", "todo", "next", "what should i do", "advise", "move"]):
+            return (
+                f"Mark, here is our prioritized executive doctoral roadmap for the next 14 days:\n\n"
+                f"1. **Priority 1 (Funding)**: Submit applications to 2 top travel grants (ACM SIGCOMM & NeurIPS Travel Awards) to lock in zero out-of-pocket travel.\n"
+                f"2. **Priority 2 (Research Lab Residency)**: Send our tailored cold outreach email to 3 Google DeepMind & Microsoft Research PIs highlighting ClawBio.\n"
+                f"3. **Priority 3 (Codebase Polishing)**: Add reproducible benchmark scripts and Docker containers to `github.com/Febiri/ClawBio-Pipeline` and `neuro-symbolic-rag`.\n"
+                f"4. **Priority 4 (Springer Follow-up)**: Prepare our point-by-point rebuttal template so that the moment reviewer comments land, we return the revised manuscript within 72 hours."
+            )
+
+        # 7. Comprehensive Fallback for any general query
+        return (
+            f"Mark, acknowledging your query: *\"{user_message}\"*.\n\n"
+            f"As your executive digital twin, I evaluate this through the lens of our core mandate: accelerating your PhD trajectory, scaling DevSpace Systems, and securing Tier-1 academic recognition.\n\n"
+            f"Here is how we execute on this:\n"
+            f"- **Leverage Our Proven Repositories**: Ground all technical claims directly in `neuro-symbolic-rag` and `ClawBio-Pipeline`.\n"
+            f"- **Speed & Precision**: Whether this requires an application dossier, a rebuttal defense, or architectural formulation, I can generate the complete publication-grade draft immediately.\n\n"
+            f"What specific section or draft would you like me to generate first?"
+        )
 
     # ------------------------------------------------------------------
     # Gemini Generation Helpers

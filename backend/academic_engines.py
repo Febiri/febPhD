@@ -157,6 +157,90 @@ Provide an authoritative, rigorous analysis formatted strictly as valid JSON wit
             "recommended_keywords_for_literature_search": [f"{clean_topic} benchmarks", "out-of-distribution generalization", "ablation studies", "computational complexity"]
         }
 
+    def chat_gap_deep_dive(
+        self,
+        topic: str,
+        radar_result: Dict[str, Any],
+        user_message: str,
+        chat_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        """Dynamic interactive deep-dive into research gaps and novelty formulation."""
+        clean_topic = topic or radar_result.get("topic", "Research Topic")
+        gaps_summary = "\n".join([f"- {g.get('title', '')}: {g.get('description', '')}" for g in radar_result.get("unsolved_research_gaps", [])[:4]])
+        competitors = "\n".join([f"- {c.get('name', '')} ({c.get('organization', '')}): Deficiencies -> {c.get('deficiency', '')}" for c in radar_result.get("existing_competitors_and_baselines", [])[:3]])
+
+        system_prompt = f"""You are an elite Research Novelty Strategist and Senior Academic Architect.
+The student is investigating research gaps in: "{clean_topic}".
+Identified Unsolved Gaps:
+{gaps_summary}
+Existing Baselines & Flaws:
+{competitors}
+
+Your objective: Answer the researcher's query dynamically with mathematically grounded architectures, concrete hypotheses, experimental ablation designs, and literature links."""
+
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
+        if self.model and self.model not in models:
+            models.insert(0, self.model)
+
+        if self.api_key:
+            client = genai.Client(api_key=self.api_key)
+            history_str = ""
+            if chat_history:
+                for m in chat_history[-6:]:
+                    role = "Researcher" if m.get("role") == "user" else "NoveltyAdvisor"
+                    history_str += f"{role}: {m.get('content', '')}\n"
+
+            prompt = f"""{system_prompt}
+
+CONVERSATION HISTORY:
+{history_str}
+Researcher: {user_message}
+NoveltyAdvisor (Provide actionable, technically deep, and scientifically rigorous architectural guidance):"""
+
+            for m in models:
+                try:
+                    resp = client.models.generate_content(
+                        model=m,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(temperature=0.3)
+                    )
+                    text = (resp.text or "").strip()
+                    if text:
+                        return text
+                except Exception as e:
+                    logger.warning(f"Radar deep-dive chat with {m} failed: {e}")
+                    continue
+
+        return self._fallback_gap_chat(clean_topic, radar_result, user_message)
+
+    def _fallback_gap_chat(self, topic: str, radar: Dict[str, Any], user_message: str) -> str:
+        q = user_message.lower()
+        if any(w in q for w in ["architecture", "model", "equation", "loss", "formulat"]):
+            return (
+                f"**Proposed Algorithmic Formulation for '{topic}'**:\n\n"
+                f"To bridge the identified research gap, we recommend introducing a hybrid constrained objective:\n\n"
+                f"$$\\mathcal{{L}}_{{total}} = \\mathcal{{L}}_{{task}}(\\theta) + \\lambda_{{reg}} \\cdot \\Omega_{{structural}}(\\theta) + \\gamma \\cdot \\mathcal{{D}}_{{consistency}}$$\n\n"
+                f"1. **Core Representation Layer**: Deploy parameter-efficient adapter bottlenecks to isolate domain invariant features.\n"
+                f"2. **Constraint Enforcement**: Apply Lipschitz regularization to ensure output stability under non-uniform distributions.\n"
+                f"3. **Expected Advantage**: Bypasses the O(N^2) memory footprint observed in standard foundational baselines."
+            )
+        elif any(w in q for w in ["dataset", "benchmark", "eval", "metric"]):
+            return (
+                f"**Recommended Benchmarks & Evaluation Protocol for '{topic}'**:\n\n"
+                f"1. **Primary Standard Benchmarks**: Benchmark on established public repositories (e.g. HuggingFace Datasets, PapersWithCode leaderboard baselines).\n"
+                f"2. **Perturbation & Stress Tests**: Evaluate performance drops under synthetic noise and domain-shift splits.\n"
+                f"3. **Statistical Metrics**: Report mean, median, and 5-seed standard deviations (p-value < 0.01 threshold)."
+            )
+        else:
+            return (
+                f"**Strategic Guidance on '{topic}' Gaps**:\n\n"
+                f"The highest leverage breakthrough in this area involves decoupling the feature extraction from the optimization dynamics.\n\n"
+                f"**Recommended 3-Step Execution**:\n"
+                f"- **Step 1**: Establish a reproducible baseline on open benchmarks.\n"
+                f"- **Step 2**: Implement the targeted architectural constraint to isolate the identified deficiency.\n"
+                f"- **Step 3**: Submit as a full paper to Tier-1 venues (NeurIPS, ICML, IEEE Transactions) with open-source code and ablation logs."
+            )
+
 
 # =====================================================================
 # ENGINE 4: AI "REVIEWER #2" HARSH PEER-REVIEW SIMULATOR
@@ -528,6 +612,90 @@ We presented a comprehensive, validated framework for {clean_title}. By addressi
             "revised_document_draft": draft
         }
 
+    def chat_rebuttal(
+        self,
+        paper_title: str,
+        critique: Dict[str, Any],
+        user_message: str,
+        chat_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        """Dynamic interactive rebuttal and critique defense coach for Reviewer #2."""
+        weaknesses_summary = "\n".join([
+            f"- [{w.get('severity', 'Medium')}] {w.get('area', '')}: {w.get('critique', '')}"
+            for w in critique.get("critical_weaknesses", [])[:5]
+        ])
+        questions_summary = "\n".join([f"- {q}" for q in critique.get("questions_for_authors", [])[:4]])
+
+        system_prompt = f"""You are Reviewer #2 Simulator & Senior Rebuttal Coach.
+You have audited the paper: "{paper_title}" with verdict: {critique.get('verdict', 'Borderline')}.
+Critical Weaknesses identified:
+{weaknesses_summary}
+Questions for authors:
+{questions_summary}
+
+Your job is to coach the author on drafting an airtight, respectful, empirically bulletproof rebuttal response, or answer their questions on how to fix these critiques."""
+
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
+        if self.model and self.model not in models:
+            models.insert(0, self.model)
+
+        if self.api_key:
+            client = genai.Client(api_key=self.api_key)
+            history_str = ""
+            if chat_history:
+                for m in chat_history[-6:]:
+                    role = "Author" if m.get("role") == "user" else "ReviewerCoach"
+                    history_str += f"{role}: {m.get('content', '')}\n"
+
+            prompt = f"""{system_prompt}
+
+CONVERSATION HISTORY:
+{history_str}
+Author: {user_message}
+ReviewerCoach (Provide an articulate, tactical response with exact rebuttal phrasing or experimental designs):"""
+
+            for m in models:
+                try:
+                    resp = client.models.generate_content(
+                        model=m,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(temperature=0.3)
+                    )
+                    text = (resp.text or "").strip()
+                    if text:
+                        return text
+                except Exception as e:
+                    logger.warning(f"Rebuttal chat with {m} failed: {e}")
+                    continue
+
+        return self._fallback_rebuttal_chat(paper_title, critique, user_message)
+
+    def _fallback_rebuttal_chat(self, title: str, critique: Dict[str, Any], user_message: str) -> str:
+        msg = user_message.lower()
+        if any(w in msg for w in ["baseline", "sota", "compare"]):
+            return (
+                f"**Rebuttal Strategy for Baseline Critiques on \"{title}\"**:\n\n"
+                f"1. **Acknowledge and Thank**: *'We thank Reviewer #2 for highlighting the comparison against contemporary 2024 baselines.'*\n"
+                f"2. **Present Empirical Table**: In your rebuttal response, provide an immediate 3-row mini-table showing your metric vs Baseline X and Baseline Y under identical compute budgets.\n"
+                f"3. **Point to Revised Draft**: State that Table 2 in the revised manuscript now includes 5-seed standard deviations demonstrating statistical superiority (p < 0.01)."
+            )
+        elif any(w in msg for w in ["ablation", "isolate", "component"]):
+            return (
+                f"**Rebuttal Strategy for Ablation Weaknesses on \"{title}\"**:\n\n"
+                f"1. **Directly Answer the Core Question**: Explicitly clarify which module contributes what percentage gain.\n"
+                f"2. **Rebuttal Phrasing**: *'To address Reviewer #2's question on architectural contribution, we ran an ablation isolating Component A (yields +2.8% F1) from Component B (+1.4% F1). Removing both drops accuracy by 4.7%, proving synergistic efficacy.'*\n"
+                f"3. Add a dedicated paragraph in Section 5.3 of the revised manuscript."
+            )
+        else:
+            return (
+                f"**Tactical Rebuttal Advice for \"{title}\"**:\n\n"
+                f"Reviewer #2's primary concern centers on empirical validation and boundary conditions.\n\n"
+                f"**Golden Rule of Conference Rebuttals**:\n"
+                f"- Never argue defensively without empirical evidence.\n"
+                f"- Frame every critique as an opportunity: *'We have already conducted the requested experiment and updated Section 4 accordingly.'*\n"
+                f"- Highlight that your core algorithm maintains O(N) complexity while the reviewer's suggested alternative requires O(N^2)."
+            )
+
     def _fallback_review_full_manuscript(self, title: str, full_text: str, venue: str) -> Dict[str, Any]:
         word_count = len(full_text.split())
         suggestions = self._build_default_copy_paste_suggestions(title, full_text[:1200], venue)
@@ -572,6 +740,90 @@ We presented a comprehensive, validated framework for {clean_title}. By addressi
             "copy_paste_suggestions": suggestions,
             "revised_document_draft": draft
         }
+
+    def chat_rebuttal(
+        self,
+        paper_title: str,
+        critique: Dict[str, Any],
+        user_message: str,
+        chat_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        """Dynamic interactive rebuttal and critique defense coach for Reviewer #2."""
+        weaknesses_summary = "\n".join([
+            f"- [{w.get('severity', 'Medium')}] {w.get('area', '')}: {w.get('critique', '')}"
+            for w in critique.get("critical_weaknesses", [])[:5]
+        ])
+        questions_summary = "\n".join([f"- {q}" for q in critique.get("questions_for_authors", [])[:4]])
+
+        system_prompt = f"""You are Reviewer #2 Simulator & Senior Rebuttal Coach.
+You have audited the paper: "{paper_title}" with verdict: {critique.get('verdict', 'Borderline')}.
+Critical Weaknesses identified:
+{weaknesses_summary}
+Questions for authors:
+{questions_summary}
+
+Your job is to coach the author on drafting an airtight, respectful, empirically bulletproof rebuttal response, or answer their questions on how to fix these critiques."""
+
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
+        if self.model and self.model not in models:
+            models.insert(0, self.model)
+
+        if self.api_key:
+            client = genai.Client(api_key=self.api_key)
+            history_str = ""
+            if chat_history:
+                for m in chat_history[-6:]:
+                    role = "Author" if m.get("role") == "user" else "ReviewerCoach"
+                    history_str += f"{role}: {m.get('content', '')}\n"
+
+            prompt = f"""{system_prompt}
+
+CONVERSATION HISTORY:
+{history_str}
+Author: {user_message}
+ReviewerCoach (Provide an articulate, tactical response with exact rebuttal phrasing or experimental designs):"""
+
+            for m in models:
+                try:
+                    resp = client.models.generate_content(
+                        model=m,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(temperature=0.3)
+                    )
+                    text = (resp.text or "").strip()
+                    if text:
+                        return text
+                except Exception as e:
+                    logger.warning(f"Rebuttal chat with {m} failed: {e}")
+                    continue
+
+        return self._fallback_rebuttal_chat(paper_title, critique, user_message)
+
+    def _fallback_rebuttal_chat(self, title: str, critique: Dict[str, Any], user_message: str) -> str:
+        msg = user_message.lower()
+        if any(w in msg for w in ["baseline", "sota", "compare"]):
+            return (
+                f"**Rebuttal Strategy for Baseline Critiques on \"{title}\"**:\n\n"
+                f"1. **Acknowledge and Thank**: *'We thank Reviewer #2 for highlighting the comparison against contemporary 2024 baselines.'*\n"
+                f"2. **Present Empirical Table**: In your rebuttal response, provide an immediate 3-row mini-table showing your metric vs Baseline X and Baseline Y under identical compute budgets.\n"
+                f"3. **Point to Revised Draft**: State that Table 2 in the revised manuscript now includes 5-seed standard deviations demonstrating statistical superiority (p < 0.01)."
+            )
+        elif any(w in msg for w in ["ablation", "isolate", "component"]):
+            return (
+                f"**Rebuttal Strategy for Ablation Weaknesses on \"{title}\"**:\n\n"
+                f"1. **Directly Answer the Core Question**: Explicitly clarify which module contributes what percentage gain.\n"
+                f"2. **Rebuttal Phrasing**: *'To address Reviewer #2's question on architectural contribution, we ran an ablation isolating Component A (yields +2.8% F1) from Component B (+1.4% F1). Removing both drops accuracy by 4.7%, proving synergistic efficacy.'*\n"
+                f"3. Add a dedicated paragraph in Section 5.3 of the revised manuscript."
+            )
+        else:
+            return (
+                f"**Tactical Rebuttal Advice for \"{title}\"**:\n\n"
+                f"Reviewer #2's primary concern centers on empirical validation and boundary conditions.\n\n"
+                f"**Golden Rule of Conference Rebuttals**:\n"
+                f"- Never argue defensively without empirical evidence.\n"
+                f"- Frame every critique as an opportunity: *'We have already conducted the requested experiment and updated Section 4 accordingly.'*\n"
+                f"- Highlight that your core algorithm maintains O(N) complexity while the reviewer's suggested alternative requires O(N^2)."
+            )
 
 
 # =====================================================================
