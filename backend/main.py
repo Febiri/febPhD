@@ -40,6 +40,10 @@ try:
         parse_briefing_sections, extract_document_chapters
     )
     from backend.conference_scout import ConferenceScoutService
+    from backend.academic_engines import (
+        ResearchGapService, ReviewerSimulatorService,
+        FundingScoutService, IndustryLabService
+    )
 except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
@@ -53,6 +57,10 @@ except ImportError:
         parse_briefing_sections, extract_document_chapters
     )
     from conference_scout import ConferenceScoutService
+    from academic_engines import (
+        ResearchGapService, ReviewerSimulatorService,
+        FundingScoutService, IndustryLabService
+    )
 
 logger = logging.getLogger("api")
 
@@ -119,6 +127,29 @@ class ConferenceSearchRequest(BaseModel):
     grants_only: Optional[bool] = False
     region: Optional[str] = None
     upcoming_only: Optional[bool] = True
+
+
+class RadarAnalysisRequest(BaseModel):
+    topic: str
+    idea_proposal: Optional[str] = ""
+    target_domain: Optional[str] = "Computer Science"
+
+
+class ReviewerRequest(BaseModel):
+    title: str
+    abstract: str
+    methodology: Optional[str] = ""
+    target_venue: Optional[str] = "NeurIPS / IEEE"
+
+
+class FundingSearchRequest(BaseModel):
+    query: Optional[str] = ""
+    category: Optional[str] = "All"
+
+
+class LabSearchRequest(BaseModel):
+    query: Optional[str] = ""
+    item_type: Optional[str] = "All"
 
 
 # Core Pipeline Execution Helper
@@ -894,6 +925,69 @@ def get_featured_conferences():
     return scout.search(query="", upcoming_only=True)
 
 
+# =====================================================================
+# ENGINE 3: RESEARCH GAP & NOVELTY RADAR ENDPOINT
+# =====================================================================
+@app.post("/api/radar/analyze")
+def analyze_research_gap(payload: RadarAnalysisRequest):
+    """Audits literature, calculates novelty index, and surfaces unsolved research gaps."""
+    service = ResearchGapService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.analyze_gap(
+        topic=payload.topic,
+        idea_proposal=payload.idea_proposal or "",
+        target_domain=payload.target_domain or "Computer Science"
+    )
+
+
+# =====================================================================
+# ENGINE 4: AI "REVIEWER #2" SIMULATOR ENDPOINT
+# =====================================================================
+@app.post("/api/reviewer/simulate")
+def simulate_reviewer_two(payload: ReviewerRequest):
+    """Simulates a ruthless Tier-1 peer reviewer critique on draft papers."""
+    service = ReviewerSimulatorService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.review_paper(
+        title=payload.title,
+        abstract=payload.abstract,
+        methodology=payload.methodology or "",
+        target_venue=payload.target_venue or "NeurIPS / IEEE"
+    )
+
+
+# =====================================================================
+# ENGINE 5: FELLOWSHIP, TRAVEL GRANT & FUNDING RADAR ENDPOINTS
+# =====================================================================
+@app.get("/api/grants/search")
+def get_grants(query: Optional[str] = "", category: Optional[str] = "All"):
+    """Returns doctoral fellowships and student conference travel grants."""
+    service = FundingScoutService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.search_funding(query=query or "", category=category or "All")
+
+
+@app.post("/api/grants/search")
+def post_grants(payload: FundingSearchRequest):
+    """Searches doctoral fellowships and travel grants with live AI expansion."""
+    service = FundingScoutService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.search_funding(query=payload.query or "", category=payload.category or "All")
+
+
+# =====================================================================
+# ENGINE 6: TECH SUMMIT & INDUSTRY LAB CONNECTOR ENDPOINTS
+# =====================================================================
+@app.get("/api/labs/search")
+def get_labs(query: Optional[str] = "", item_type: Optional[str] = "All"):
+    """Returns research scientist internships and global tech expos."""
+    service = IndustryLabService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.search_labs(query=query or "", item_type=item_type or "All")
+
+
+@app.post("/api/labs/search")
+def post_labs(payload: LabSearchRequest):
+    """Searches research scientist internships and tech summits with live AI expansion."""
+    service = IndustryLabService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.search_labs(query=payload.query or "", item_type=payload.item_type or "All")
+
+
 @app.get("/api/health")
 def api_health():
     """Health check endpoint to test runtime status."""
@@ -972,3 +1066,46 @@ def serve_app():
         status_code=404,
         content={"message": "Frontend index.html not found. Ensure frontend directory is populated."}
     )
+
+
+# Serve Engine 03: Research Gap & Novelty Radar
+@app.get("/radar")
+@app.get("/novelty")
+def serve_radar():
+    content = _load_html("radar.html")
+    if content:
+        return HTMLResponse(content=content)
+    return serve_home()
+
+
+# Serve Engine 04: AI "Reviewer #2" Harsh Peer-Review Simulator
+@app.get("/reviewer")
+@app.get("/peer-review")
+def serve_reviewer():
+    content = _load_html("reviewer.html")
+    if content:
+        return HTMLResponse(content=content)
+    return serve_home()
+
+
+# Serve Engine 05: Fellowship, Travel Grant & Funding Radar
+@app.get("/grants")
+@app.get("/funding")
+@app.get("/fellowships")
+def serve_grants():
+    content = _load_html("grants.html")
+    if content:
+        return HTMLResponse(content=content)
+    return serve_home()
+
+
+# Serve Engine 06: Tech Summit & Industry Research Lab Connector
+@app.get("/lab-connector")
+@app.get("/labs")
+@app.get("/careers")
+@app.get("/summits")
+def serve_lab_connector():
+    content = _load_html("lab_connector.html")
+    if content:
+        return HTMLResponse(content=content)
+    return serve_home()

@@ -1,0 +1,642 @@
+import os
+import sys
+import json
+import re
+import logging
+from datetime import datetime, date
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from google import genai
+from google.genai import types
+
+try:
+    from backend.config import GEMINI_API_KEY, GEMINI_MODEL
+except ImportError:
+    from config import GEMINI_API_KEY, GEMINI_MODEL
+
+logger = logging.getLogger("academic_engines")
+logging.basicConfig(level=logging.INFO)
+
+
+# =====================================================================
+# ENGINE 3: RESEARCH GAP & NOVELTY RADAR
+# =====================================================================
+class ResearchGapService:
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = (api_key or GEMINI_API_KEY or "").strip()
+        self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
+
+    def analyze_gap(self, topic: str, idea_proposal: str = "", target_domain: str = "Computer Science") -> Dict[str, Any]:
+        """Analyzes novelty, scans state-of-the-art benchmarks, and maps unsolved research gaps."""
+        today = date.today().strftime("%B %Y")
+        
+        # 1. Try Gemini Live Synthesis
+        if self.api_key:
+            try:
+                result = self._gemini_gap_analysis(topic, idea_proposal, target_domain, today)
+                if result:
+                    return result
+            except Exception as e:
+                logger.warning(f"Gemini Gap Radar failed: {e}. Using deterministic fallback.")
+        
+        # 2. Resilient Deterministic Fallback
+        return self._fallback_gap_analysis(topic, idea_proposal, target_domain)
+
+    def _gemini_gap_analysis(self, topic: str, idea: str, domain: str, today: str) -> Optional[Dict[str, Any]]:
+        client = genai.Client(api_key=self.api_key)
+        prompt = f"""You are a Principal AI Scientist and Senior PhD Dissertation Advisor in {domain}.
+Today's date is {today}.
+A PhD researcher is proposing research on:
+TOPIC: {topic}
+PROPOSED IDEA / METHODOLOGY: {idea or 'Investigating novel techniques, architectures, and benchmarks in this domain.'}
+
+Provide an authoritative, rigorous analysis formatted strictly as valid JSON with no markdown wrapping or backticks:
+{{
+  "topic": "{topic}",
+  "novelty_score": 85,
+  "novelty_verdict": "High Novelty with Clear Empirical Gap",
+  "summary_of_state_of_the_art": "Summary of current state-of-the-art (SOTA) solutions and leading approaches...",
+  "existing_competitors_and_baselines": [
+    {{"name": "Leading Baseline 1", "organization": "Top Lab/Institution", "strengths": "Strong performance on standard benchmark", "deficiency": "Fails under high latency or real-world noise"}},
+    {{"name": "Leading Baseline 2", "organization": "Leading Tech Lab", "strengths": "Theoretical bounds guaranteed", "deficiency": "Scalability bottlenecks beyond 1M parameters"}}
+  ],
+  "unsolved_research_gaps": [
+    {{"title": "Unsolved Gap 1", "description": "Why current papers haven't solved this yet...", "impact_level": "Tier-1 Publication Potential"}},
+    {{"title": "Unsolved Gap 2", "description": "Specific mathematical or benchmark bottleneck...", "impact_level": "High Impact"}}
+  ],
+  "actionable_experiment_roadmap": [
+    {{"phase": "Phase 1 (Months 1-2)", "task": "Baseline reproduction and failure case demonstration"}},
+    {{"phase": "Phase 2 (Months 3-4)", "task": "Core architectural or algorithmic intervention"}},
+    {{"phase": "Phase 3 (Months 5-6)", "task": "Ablation studies, benchmark evaluation on SOTA datasets, and paper writing"}}
+  ],
+  "suggested_target_venues": ["NeurIPS", "ICML", "IEEE TPAMI", "ACM SIGCOMM", "CVPR"],
+  "recommended_keywords_for_literature_search": ["key concept 1", "benchmark 2", "theory 3"]
+}}
+"""
+        models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
+        if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
+            models.insert(0, self.model)
+        for m in models:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2)
+                )
+                text = (response.text or "").strip()
+                text = re.sub(r"^```json\s*", "", text)
+                text = re.sub(r"^```\s*", "", text)
+                text = re.sub(r"\s*```$", "", text)
+                parsed = json.loads(text)
+                if isinstance(parsed, dict) and "novelty_score" in parsed:
+                    return parsed
+            except Exception as e:
+                logger.warning(f"Model {m} failed for gap radar: {e}")
+                continue
+        return None
+
+    def _fallback_gap_analysis(self, topic: str, idea: str, domain: str) -> Dict[str, Any]:
+        clean_topic = topic.strip() or "Computer Science & Engineering"
+        return {
+            "topic": clean_topic,
+            "novelty_score": 82,
+            "novelty_verdict": "Promising Research Direction with Open Benchmark Gaps",
+            "summary_of_state_of_the_art": f"Current research in {clean_topic} exhibits strong algorithmic progress, but remains bounded by computational scaling, out-of-distribution robustness, and real-time efficiency.",
+            "existing_competitors_and_baselines": [
+                {
+                    "name": f"Foundational {clean_topic} Baseline",
+                    "organization": "Stanford / MIT / Google Research",
+                    "strengths": "Demonstrates strong performance in synthetic or uniform test scenarios",
+                    "deficiency": "Severe performance degradation under domain-shift and edge constraints"
+                },
+                {
+                    "name": "State-of-the-Art Transformer / Neural Framework",
+                    "organization": "Top Academic Consortia",
+                    "strengths": "High representational capacity on standard benchmarks",
+                    "deficiency": "Subquadratic memory requirements and poor sample efficiency"
+                }
+            ],
+            "unsolved_research_gaps": [
+                {
+                    "title": f"Robustness and Generalization Bottleneck in {clean_topic}",
+                    "description": "Lack of rigorous empirical evaluations on diverse, long-tail distributions and edge conditions.",
+                    "impact_level": "Tier-1 Conference Potential"
+                },
+                {
+                    "title": "Compute-Efficient Convergence & Verification",
+                    "description": "Current architectures require excessive parameter counts without certified performance guarantees.",
+                    "impact_level": "High Impact"
+                }
+            ],
+            "actionable_experiment_roadmap": [
+                {"phase": "Phase 1: Diagnostic Profiling", "task": f"Formally identify the exact breaking points of existing {clean_topic} baselines."},
+                {"phase": "Phase 2: Proposed Intervention", "task": "Formulate your novel mathematical or architectural constraint to overcome identified deficiencies."},
+                {"phase": "Phase 3: Rigorous Validation", "task": "Conduct extensive ablation studies across multi-benchmark suites to prove superiority."}
+            ],
+            "suggested_target_venues": ["IEEE Transactions", "ACM Conferences", "NeurIPS", "ICML", "CVPR"],
+            "recommended_keywords_for_literature_search": [f"{clean_topic} benchmarks", "out-of-distribution generalization", "ablation studies", "computational complexity"]
+        }
+
+
+# =====================================================================
+# ENGINE 4: AI "REVIEWER #2" HARSH PEER-REVIEW SIMULATOR
+# =====================================================================
+class ReviewerSimulatorService:
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = (api_key or GEMINI_API_KEY or "").strip()
+        self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
+
+    def review_paper(self, title: str, abstract: str, methodology: str = "", target_venue: str = "NeurIPS / IEEE") -> Dict[str, Any]:
+        """Simulates an uncompromising, rigorous Tier-1 peer reviewer critique."""
+        if self.api_key:
+            try:
+                res = self._gemini_review(title, abstract, methodology, target_venue)
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning(f"Reviewer simulation error: {e}. Falling back.")
+        return self._fallback_review(title, abstract, target_venue)
+
+    def _gemini_review(self, title: str, abstract: str, methodology: str, venue: str) -> Optional[Dict[str, Any]]:
+        client = genai.Client(api_key=self.api_key)
+        prompt = f"""You are the infamous "Reviewer #2" for a top-tier academic venue ({venue}).
+You are rigorous, skeptical, constructive, and uncompromising. You hold submissions to the highest scientific standards.
+TITLE: {title}
+ABSTRACT: {abstract}
+METHODOLOGY / EXPERIMENTS: {methodology or 'Standard proposed empirical and theoretical framework'}
+
+Provide an in-depth peer review formatted strictly as valid JSON with no markdown wrapping or backticks:
+{{
+  "overall_score": 5,
+  "score_range": "1 to 10 (10 = Award Quality, 6 = Weak Accept Threshold)",
+  "verdict": "Borderline / Weak Reject",
+  "executive_summary": "Concise 2-3 sentence academic summary of what the paper claims to accomplish...",
+  "strengths": [
+    "Clear writing in the introductory framing",
+    "Timely research problem addressed"
+  ],
+  "critical_weaknesses": [
+    {{"area": "Missing Baselines", "critique": "The authors omit key 2024-2025 SOTA comparisons on standard benchmarks...", "severity": "High"}},
+    {{"area": "Ablation Studies", "critique": "It is unclear which architectural component actually drives the reported gain...", "severity": "Critical"}},
+    {{"area": "Mathematical Rigor & Assumptions", "critique": "Assumption 2 is unrealistic in real-world deployment...", "severity": "Medium"}}
+  ],
+  "questions_for_authors": [
+    "How does the proposed method scale when dataset size increases by 10x?",
+    "Did the authors conduct repeated runs with distinct random seeds to report standard deviations?",
+    "Why was benchmark X chosen over the standard benchmark Y?"
+  ],
+  "concrete_action_plan_to_accept": [
+    "Run benchmark comparison against Baseline Z and report statistical variance.",
+    "Add an ablation table isolating Component A from Component B.",
+    "Tone down claims in Section 1 from 'fundamentally solves' to 'significantly improves'."
+  ],
+  "simulated_author_rebuttal": "Draft strategy: Respectfully thank the reviewer for pointing out the missing Baseline Z. Provide immediate empirical evidence from an ablation experiment and clarify the scope of Assumption 2."
+}}
+"""
+        models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
+        if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
+            models.insert(0, self.model)
+        for m in models:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.25)
+                )
+                text = (response.text or "").strip()
+                text = re.sub(r"^```json\s*", "", text)
+                text = re.sub(r"^```\s*", "", text)
+                text = re.sub(r"\s*```$", "", text)
+                parsed = json.loads(text)
+                if isinstance(parsed, dict) and "overall_score" in parsed:
+                    return parsed
+            except Exception as e:
+                logger.warning(f"Reviewer model {m} failed: {e}")
+                continue
+        return None
+
+    def _fallback_review(self, title: str, abstract: str, venue: str) -> Dict[str, Any]:
+        return {
+            "overall_score": 5,
+            "score_range": "1 to 10 (6 is accept threshold)",
+            "verdict": "Borderline / Weak Reject (Requires Revision)",
+            "executive_summary": f"The submission addresses an important challenge in '{title}'. However, while the motivation is commendable, the empirical validation lacks sufficient baseline comparisons and ablation isolation required for {venue}.",
+            "strengths": [
+                "Clear conceptual problem formulation and structured presentation.",
+                "Well-motivated application domain with genuine academic and practical interest."
+            ],
+            "critical_weaknesses": [
+                {
+                    "area": "Baseline Competitiveness",
+                    "critique": "The empirical evaluation compares against outdated baselines. Key state-of-the-art methods from recent top venues are missing from Table 1.",
+                    "severity": "High"
+                },
+                {
+                    "area": "Ablation and Attribution",
+                    "critique": "The paper does not adequately isolate which component contributes to the observed metric improvement. Without ablation, the novel mechanism cannot be credited.",
+                    "severity": "Critical"
+                },
+                {
+                    "area": "Statistical Significance",
+                    "critique": "Results are reported without error bars or multiple random seed trials, making it impossible to verify whether the 1.8% gain is statistically significant.",
+                    "severity": "Medium"
+                }
+            ],
+            "questions_for_authors": [
+                "Can you provide results across at least 5 different random seeds with confidence intervals?",
+                "How does the computational overhead (latency, FLOPs, memory footprint) compare to the standard baseline?",
+                "What failure modes were observed when testing on out-of-distribution inputs?"
+            ],
+            "concrete_action_plan_to_accept": [
+                "Incorporate the top two 2024-2025 SOTA baselines into your comparison matrix.",
+                "Add an explicit ablation table isolating each sub-component.",
+                "Report mean and standard deviation across repeated trials."
+            ],
+            "simulated_author_rebuttal": "We thank Reviewer #2 for these constructive observations. We have performed 5-seed repetitions with error bars and added an ablation table demonstrating that our novel module contributes 74% of the performance delta."
+        }
+
+
+# =====================================================================
+# ENGINE 5: FELLOWSHIP, TRAVEL GRANT & FUNDING RADAR
+# =====================================================================
+MASTER_GRANTS: List[Dict[str, Any]] = [
+    {
+        "id": "google-phd-fellowship",
+        "title": "Google PhD Fellowship Program",
+        "category": "Prestigious Fellowship",
+        "organization": "Google Research",
+        "award": "$35,000 - $50,000 stipend + full tuition + Google Research Mentor",
+        "deadline": "Rolling / Annual (Typically May - June)",
+        "eligibility": "Full-time PhD students in Computer Science, Machine Learning, Systems, Security",
+        "description": "Recognizes outstanding graduate students doing exceptional research in computer science and related disciplines. Pairs recipients with a dedicated Google Research Scientist mentor.",
+        "url": "https://research.google/outreach/phd-fellowship/",
+        "tags": ["Full Fellowship", "Mentorship", "Tier-1 Prestige", "Global"]
+    },
+    {
+        "id": "msr-phd-fellowship",
+        "title": "Microsoft Research PhD Fellowship",
+        "category": "Prestigious Fellowship",
+        "organization": "Microsoft Research",
+        "award": "$42,000 annual stipend + tuition fees + 12-week paid research internship",
+        "deadline": "Annual (Typically June - August)",
+        "eligibility": "PhD students in 2nd or 3rd year in Computer Science, Electrical Engineering, Mathematics",
+        "description": "Two-year fellowship covering tuition and living expenses, plus an opportunity to conduct an internship at Microsoft Research labs in Redmond, Cambridge, or New York.",
+        "url": "https://www.microsoft.com/en-us/research/academic-programs/phd-fellowship/",
+        "tags": ["Full Fellowship", "Internship Guaranteed", "Global"]
+    },
+    {
+        "id": "meta-phd-fellowship",
+        "title": "Meta Research PhD Fellowship",
+        "category": "Prestigious Fellowship",
+        "organization": "Meta (Facebook) AI Research",
+        "award": "Two years of full tuition + $42,000 annual stipend + $2,000 conference travel",
+        "deadline": "Annual (Typically September - October)",
+        "eligibility": "Enrolled PhD students anywhere in the world working on AI, AR/VR, Systems, Security",
+        "description": "Supports promising doctoral students whose research advances cutting-edge technology in artificial intelligence, networking, systems, computer vision, and NLP.",
+        "url": "https://research.facebook.com/fellowship/",
+        "tags": ["Full Tuition", "Stipend", "Travel Grant", "Global"]
+    },
+    {
+        "id": "nvidia-graduate-fellowship",
+        "title": "NVIDIA Graduate Fellowship Program",
+        "category": "Prestigious Fellowship",
+        "organization": "NVIDIA",
+        "award": "$50,000 research grant + GPU computing resources + NVIDIA research mentor",
+        "deadline": "Annual (Typically September)",
+        "eligibility": "PhD students who have completed their first year in GPU computing, AI, Vision, Graphics",
+        "description": "Awards up to $50,000 per recipient plus early access to NVIDIA hardware, SDKs, and deep technical collaboration with NVIDIA research engineers.",
+        "url": "https://www.nvidia.com/en-us/research/graduate-fellowships/",
+        "tags": ["Hardware Access", "$50k Award", "High Performance Computing"]
+    },
+    {
+        "id": "ibm-phd-fellowship",
+        "title": "IBM PhD Fellowship Award",
+        "category": "Prestigious Fellowship",
+        "organization": "IBM Research",
+        "award": "$40,000 stipend + IBM Research mentor pairing",
+        "deadline": "Annual (Typically October - November)",
+        "eligibility": "Doctoral candidates nominated by their academic institution in AI, Cloud, Quantum, Security",
+        "description": "Two-year fellowship celebrating doctoral candidates whose technical interests align with IBM research agendas in quantum, hybrid cloud, and trustworthy AI.",
+        "url": "https://www.ibm.com/academic/initiatives/phd-fellowship",
+        "tags": ["Quantum Computing", "Trustworthy AI", "Global"]
+    },
+    {
+        "id": "sigcomm-travel-grant",
+        "title": "ACM SIGCOMM Student Travel Grants",
+        "category": "Conference Travel Grant",
+        "organization": "ACM SIGCOMM",
+        "award": "$1,500 - $3,000 (Covers flights, hotel accommodation, and registration)",
+        "deadline": "Annual (Aligned with conference registration, typically June - July)",
+        "eligibility": "Undergraduate, Master's, or PhD students attending ACM SIGCOMM",
+        "description": "Supports student participation at premier networking and communications conferences. Priority given to student authors and underrepresented groups.",
+        "url": "https://www.sigcomm.org/awards/student-travel-grants",
+        "tags": ["Flight Coverage", "Hotel Coverage", "Student Author Priority"]
+    },
+    {
+        "id": "neurips-travel-award",
+        "title": "NeurIPS Scholar & Student Travel Support",
+        "category": "Conference Travel Grant",
+        "organization": "Neural Information Processing Systems Foundation",
+        "award": "$1,200 - $2,500 travel reimbursement + waived conference registration",
+        "deadline": "Annual (Typically September - October)",
+        "eligibility": "Enrolled students and postdocs with accepted papers or workshop contributions",
+        "description": "Financial assistance program to enable students from across the globe to travel to and participate in the annual NeurIPS conference.",
+        "url": "https://neurips.cc/Conferences/2026/TravelSupport",
+        "tags": ["NeurIPS", "Full Registration Waiver", "Global Travel"]
+    },
+    {
+        "id": "icml-travel-grant",
+        "title": "ICML Student Travel & Registration Grants",
+        "category": "Conference Travel Grant",
+        "organization": "International Conference on Machine Learning",
+        "award": "$1,000 - $2,200 travel stipend + complimentary conference registration",
+        "deadline": "Annual (Typically April - May)",
+        "eligibility": "Graduate students with accepted papers, workshop presentations, or active doctoral research",
+        "description": "Assists active doctoral researchers in attending ICML to present their research findings and network with world-leading machine learning investigators.",
+        "url": "https://icml.cc/Conferences/2026/TravelGrants",
+        "tags": ["Machine Learning", "Conference Travel", "Author Support"]
+    },
+    {
+        "id": "black-in-ai-travel",
+        "title": "Black in AI Travel & Registration Grants",
+        "category": "Diversity & Global Grant",
+        "organization": "Black in AI",
+        "award": "Full travel stipend (flights, lodging, visa support) + conference registration",
+        "deadline": "Annual (Coincides with NeurIPS / ICML / CVPR)",
+        "eligibility": "Black researchers, students, and engineers globally working in artificial intelligence",
+        "description": "Transforms diversity in AI by providing comprehensive financial sponsorship for African and Black diaspora researchers to attend premier international conferences.",
+        "url": "https://blackinai.github.io/",
+        "tags": ["Full Flight & Visa", "Hotel Coverage", "African Diaspora", "High Impact"]
+    },
+    {
+        "id": "acm-sighpc-fellowship",
+        "title": "ACM SIGHPC Computational & Data Science Fellowship",
+        "category": "Prestigious Fellowship",
+        "organization": "ACM SIGHPC / Intel",
+        "award": "$15,000 annually for up to 2 years",
+        "deadline": "Annual (Typically April)",
+        "eligibility": "Graduate students working on high-performance computing, computational simulation, data science",
+        "description": "Specifically designed to increase diversity of students pursuing graduate degrees in data science, scientific computing, and computational engineering.",
+        "url": "https://www.sighpc.org/fellowships",
+        "tags": ["High-Performance Computing", "Data Science", "Diversity"]
+    }
+]
+
+
+class FundingScoutService:
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = (api_key or GEMINI_API_KEY or "").strip()
+        self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
+
+    def search_funding(self, query: str = "", category: str = "All") -> List[Dict[str, Any]]:
+        """Filters curated master funding awards and expands dynamically using Gemini."""
+        q = (query or "").strip().lower()
+        cat = (category or "All").strip()
+        
+        filtered = []
+        for g in MASTER_GRANTS:
+            if cat != "All" and g["category"] != cat:
+                continue
+            if q:
+                searchable = f"{g['title']} {g['organization']} {g['description']} {' '.join(g['tags'])}".lower()
+                if q not in searchable:
+                    continue
+            filtered.append(g)
+
+        # If query is specialized, call Gemini to discover additional live grants
+        if q and self.api_key:
+            try:
+                ai_grants = self._scout_grants_with_gemini(q)
+                if ai_grants:
+                    # Merge and deduplicate by title
+                    titles = {g["title"].lower() for g in filtered}
+                    for ag in ai_grants:
+                        if ag.get("title", "").lower() not in titles:
+                            filtered.append(ag)
+            except Exception as e:
+                logger.warning(f"Gemini live grant scout error: {e}")
+
+        return filtered
+
+    def _scout_grants_with_gemini(self, query: str) -> List[Dict[str, Any]]:
+        client = genai.Client(api_key=self.api_key)
+        today = date.today().strftime("%B %Y")
+        prompt = f"""Search for currently active, real academic PhD fellowships, student travel grants, and doctoral research awards for computer science and engineering related to: '{query}'. Current date: {today}.
+Return strictly a valid JSON array of objects with no markdown:
+[
+  {{
+    "id": "unique-id",
+    "title": "Official Grant/Fellowship Name",
+    "category": "Prestigious Fellowship" or "Conference Travel Grant" or "Diversity & Global Grant",
+    "organization": "Sponsoring Foundation / Company",
+    "award": "Specific monetary amount (e.g. $40,000 stipend or $2,000 flight coverage)",
+    "deadline": "Upcoming deadline or cycle window",
+    "eligibility": "Eligibility requirements for PhD students",
+    "description": "2-sentence summary of the grant scope",
+    "url": "https://official-portal-url",
+    "tags": ["Tag1", "Tag2"]
+  }}
+]"""
+        try:
+            resp = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.2)
+            )
+            text = (resp.text or "").strip()
+            text = re.sub(r"^```json\s*", "", text)
+            text = re.sub(r"^```\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            parsed = json.loads(text)
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            pass
+        return []
+
+
+# =====================================================================
+# ENGINE 6: TECH SUMMIT & INDUSTRY RESEARCH LAB CONNECTOR
+# =====================================================================
+MASTER_LABS_AND_SUMMITS: List[Dict[str, Any]] = [
+    {
+        "id": "deepmind-internship",
+        "name": "Google DeepMind Research Scientist Internship",
+        "type": "Research Lab Internship",
+        "organization": "Google DeepMind",
+        "location": "London, UK / Mountain View, CA / New York, NY",
+        "cycle": "Summer / Fall / Spring Cycles (Applications open Sept - Dec)",
+        "compensation": "Top-tier competitive PhD salary + housing stipend + relocation",
+        "target_profile": "PhD students in Machine Learning, Reinforcement Learning, Neuroscience, NLP",
+        "description": "Collaborate directly with world-class research scientists to publish groundbreaking models at NeurIPS, ICML, Nature, and Science.",
+        "url": "https://deepmind.google/careers/",
+        "tags": ["DeepMind", "Tier-1 Publications", "AGI Research", "High Impact"]
+    },
+    {
+        "id": "msr-internship",
+        "name": "Microsoft Research (MSR) Doctoral Internship",
+        "type": "Research Lab Internship",
+        "organization": "Microsoft Research",
+        "location": "Redmond, WA / Cambridge, UK / Bangalore, India",
+        "cycle": "12 to 16-week placements (Applications open September)",
+        "compensation": "Full competitive PhD salary + relocation & lodging allowance",
+        "target_profile": "Doctoral researchers in Systems, Security, AI, HCI, Theory",
+        "description": "Work side-by-side with leading researchers on open-ended fundamental research problems, leading to high-impact peer-reviewed conference publications.",
+        "url": "https://www.microsoft.com/en-us/research/careers/",
+        "tags": ["MSR", "Systems & AI", "Open Publication Policy"]
+    },
+    {
+        "id": "fair-internship",
+        "name": "Meta Fundamental AI Research (FAIR) Internship",
+        "type": "Research Lab Internship",
+        "organization": "Meta FAIR",
+        "location": "Menlo Park, CA / New York / Paris / London",
+        "cycle": "Summer 12-16 weeks (Applications open Autumn)",
+        "compensation": "Industry-leading PhD stipend + housing stipend + GPU cluster access",
+        "target_profile": "PhD candidates working on Computer Vision, Large Language Models, Robotics",
+        "description": "Direct involvement in high-impact open-source research models (e.g. LLaMA family) with unrestricted access to state-of-the-art supercomputing clusters.",
+        "url": "https://research.facebook.com/careers/",
+        "tags": ["FAIR", "LLaMA", "Massive GPU Clusters", "Open Source"]
+    },
+    {
+        "id": "amazon-science-internship",
+        "name": "Amazon Science Applied / Research Scientist Internship",
+        "type": "Research Lab Internship",
+        "organization": "Amazon Science",
+        "location": "Seattle, WA / Boston, MA / Cambridge, UK / Berlin",
+        "cycle": "Summer & Year-round 12-week internships",
+        "compensation": "Competitive PhD compensation + monthly housing stipend",
+        "target_profile": "PhD students in Information Retrieval, Distributed Systems, Cloud Architecture, NLP",
+        "description": "Tackle planetary-scale distributed computing, supply chain optimization, and foundational generative models deployed to millions of cloud customers.",
+        "url": "https://www.amazon.science/career-paths/internships",
+        "tags": ["Cloud Scale", "Distributed Systems", "AWS Research"]
+    },
+    {
+        "id": "apple-mlr-internship",
+        "name": "Apple Machine Learning Research Internship",
+        "type": "Research Lab Internship",
+        "organization": "Apple ML Research",
+        "location": "Cupertino, CA / Seattle, WA / Zurich, Switzerland",
+        "cycle": "Summer & Fall 12-week internships",
+        "compensation": "Comprehensive PhD salary + Apple product discounts + housing",
+        "target_profile": "PhD candidates in On-Device AI, Speech, Computer Vision, Privacy-Preserving ML",
+        "description": "Invent novel architectures that run efficiently on edge silicon (Apple Silicon Neural Engine) while maintaining zero-compromise privacy guarantees.",
+        "url": "https://machinelearning.apple.com/careers",
+        "tags": ["On-Device AI", "Edge Computing", "Silicon Architecture"]
+    },
+    {
+        "id": "google-io-summit",
+        "name": "Google I/O Global Developer Conference",
+        "type": "Global Tech Summit",
+        "organization": "Google",
+        "location": "Mountain View, California + Global Live Stream",
+        "cycle": "Annual (Every May)",
+        "compensation": "Free digital pass / Exclusive student attendance scholarships",
+        "target_profile": "Computer Scientists, Software Architects, Android & Cloud Researchers",
+        "description": "Google's flagship annual conference showcasing breakthrough product innovations in Gemini, Android, Cloud, Silicon, and Web development.",
+        "url": "https://io.google/",
+        "tags": ["Flagship Tech Summit", "Gemini & AI", "Networking"]
+    },
+    {
+        "id": "aws-reinvent-summit",
+        "name": "AWS re:Invent Global Cloud & AI Expo",
+        "type": "Global Tech Summit",
+        "organization": "Amazon Web Services",
+        "location": "Las Vegas, Nevada, USA",
+        "cycle": "Annual (Late November - Early December)",
+        "compensation": "All-Access pass with student discounts and university grants",
+        "target_profile": "Systems Researchers, Cloud Architects, Distributed Database Engineers",
+        "description": "The largest global cloud computing event featuring 60,000+ engineers, deep technical breakouts, hands-on hackathons, and executive networking.",
+        "url": "https://reinvent.awsevents.com/",
+        "tags": ["Cloud Computing", "Massive Scale", "Industry Networking"]
+    },
+    {
+        "id": "pydata-global",
+        "name": "PyData Global & SciPy Technical Conferences",
+        "type": "Global Tech Summit",
+        "organization": "NumFOCUS",
+        "location": "Global / Hybrid Virtual + Regional Hubs",
+        "cycle": "Annual (Multiple regional conferences throughout the year)",
+        "compensation": "Diversity scholarships and student speaker travel funding",
+        "target_profile": "Open Source Developers, Computational Researchers, Python Core Contributors",
+        "description": "Gathers users and developers of data analysis tools to share best practices in NumPy, PyTorch, Scikit-learn, Pandas, and scientific computing.",
+        "url": "https://pydata.org/",
+        "tags": ["Open Source", "Python & PyTorch", "Scientific Computing"]
+    }
+]
+
+
+class IndustryLabService:
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = (api_key or GEMINI_API_KEY or "").strip()
+        self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
+
+    def search_labs(self, query: str = "", item_type: str = "All") -> List[Dict[str, Any]]:
+        """Filters master industry labs and tech summits with optional dynamic AI discovery."""
+        q = (query or "").strip().lower()
+        t = (item_type or "All").strip()
+
+        filtered = []
+        for item in MASTER_LABS_AND_SUMMITS:
+            if t != "All" and item["type"] != t:
+                continue
+            if q:
+                searchable = f"{item['name']} {item['organization']} {item['description']} {' '.join(item['tags'])}".lower()
+                if q not in searchable:
+                    continue
+            filtered.append(item)
+
+        if q and self.api_key:
+            try:
+                ai_items = self._scout_labs_with_gemini(q)
+                if ai_items:
+                    names = {it["name"].lower() for it in filtered}
+                    for ait in ai_items:
+                        if ait.get("name", "").lower() not in names:
+                            filtered.append(ait)
+            except Exception as e:
+                logger.warning(f"Gemini live lab scout error: {e}")
+
+        return filtered
+
+    def _scout_labs_with_gemini(self, query: str) -> List[Dict[str, Any]]:
+        client = genai.Client(api_key=self.api_key)
+        today = date.today().strftime("%B %Y")
+        prompt = f"""Search for real, premier industry computer science research lab internships or global tech summits related to: '{query}'. Current date: {today}.
+Return strictly a valid JSON array of objects with no markdown:
+[
+  {{
+    "id": "unique-id",
+    "name": "Official Lab or Summit Name",
+    "type": "Research Lab Internship" or "Global Tech Summit",
+    "organization": "Sponsoring Enterprise or Lab",
+    "location": "Global locations or venue city",
+    "cycle": "Application cycle or annual month",
+    "compensation": "Stipend, salary, or travel funding details",
+    "target_profile": "Target PhD profile and research interests",
+    "description": "2-sentence overview of the opportunity",
+    "url": "https://official-portal-url",
+    "tags": ["Tag1", "Tag2"]
+  }}
+]"""
+        try:
+            resp = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.2)
+            )
+            text = (resp.text or "").strip()
+            text = re.sub(r"^```json\s*", "", text)
+            text = re.sub(r"^```\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            parsed = json.loads(text)
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            pass
+        return []

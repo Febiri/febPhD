@@ -678,7 +678,9 @@ Return a JSON array of 3 to 4 upcoming conferences with this exact schema:
 Make sure all 'submission_deadline' values are strictly AFTER {today.isoformat()}!
 Output valid JSON array only."""
 
-        models = [self.model, "gemini-2.5-flash"]
+        models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"]
+        if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
+            models.insert(0, self.model)
         unique_models = []
         for m in models:
             if m and m not in unique_models:

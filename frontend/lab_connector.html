@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Summit & Industry Lab Connector — My PhD Corner</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            indigo: {
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 400: '#818cf8',
+              500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50/60 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation -->
+  <header class="border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold text-base group-hover:bg-indigo-600 group-hover:text-white transition">
+            🚀
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base tracking-tight text-slate-900">Industry Lab & Summit Connector</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">Engine 06</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Research Scientist Internships & Global Tech Expos</p>
+          </div>
+        </a>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/" class="hover:text-indigo-600 transition">🏠 Home Corner</a>
+        <a href="/conferences" class="hover:text-indigo-600 transition">🌐 Conference Scout</a>
+        <a href="/app" class="hover:text-indigo-600 transition">📖 Paper Reader</a>
+        <a href="/radar" class="hover:text-indigo-600 transition">🔬 Novelty Radar</a>
+        <a href="/reviewer" class="hover:text-indigo-600 transition">⚖️ Reviewer #2</a>
+        <a href="/grants" class="hover:text-indigo-600 transition">💰 Funding Radar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    
+    <!-- Hero Banner -->
+    <div class="text-center max-w-3xl mx-auto mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-800 mb-4">
+        <span>🌐 Career Impact & Industry Leadership</span>
+        <span>•</span>
+        <span>Google DeepMind • FAIR • MSR</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Connect Your PhD Research with <br class="hidden sm:inline" />
+        <span class="bg-gradient-to-r from-indigo-600 to-sky-600 bg-clip-text text-transparent">World-Leading Tech Labs</span>.
+      </h1>
+      <p class="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+        Fast-track your post-PhD career. Track application cycles for Research Scientist Internships at Google DeepMind, Meta FAIR, and Microsoft Research, alongside global tech expos like Google I/O and AWS re:Invent.
+      </p>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-8 mb-8">
+      <div class="flex flex-col sm:flex-row gap-4 mb-5">
+        <div class="flex-1 relative">
+          <input 
+            type="text" 
+            id="lab-search"
+            placeholder="Search by lab name, company, or keyword (e.g. DeepMind, FAIR, Google I/O, Systems, AI)..."
+            oninput="filterLabs()"
+            class="w-full px-4 py-3 pl-10 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+          >
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <button 
+          type="button" 
+          onclick="searchLiveLabs()"
+          class="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0"
+        >
+          <span>Live AI Lab Scout</span>
+        </button>
+      </div>
+
+      <!-- Type Filter Chips -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="type-chips">
+        <button onclick="setType('All')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm" data-type="All">All Opportunities</button>
+        <button onclick="setType('Research Lab Internship')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Research Lab Internship">Research Scientist Internships</button>
+        <button onclick="setType('Global Tech Summit')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Global Tech Summit">Global Tech Summits</button>
+      </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div id="labs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+  </main>
+
+  <script>
+    let activeType = 'All';
+    let allLabs = [];
+
+    const MASTER_LOCAL_LABS = [
+      {
+        id: "deepmind-internship",
+        name: "Google DeepMind Research Scientist Internship",
+        type: "Research Lab Internship",
+        organization: "Google DeepMind",
+        location: "London, UK / Mountain View, CA / New York, NY",
+        cycle: "Summer / Fall / Spring Cycles (Applications open Sept - Dec)",
+        compensation: "Top-tier competitive PhD salary + housing stipend + relocation",
+        target_profile: "PhD students in Machine Learning, Reinforcement Learning, Neuroscience, NLP",
+        description: "Collaborate directly with world-class research scientists to publish groundbreaking models at NeurIPS, ICML, Nature, and Science.",
+        url: "https://deepmind.google/careers/",
+        tags: ["DeepMind", "Tier-1 Publications", "AGI Research", "High Impact"]
+      },
+      {
+        id: "msr-internship",
+        name: "Microsoft Research (MSR) Doctoral Internship",
+        type: "Research Lab Internship",
+        organization: "Microsoft Research",
+        location: "Redmond, WA / Cambridge, UK / Bangalore, India",
+        cycle: "12 to 16-week placements (Applications open September)",
+        compensation: "Full competitive PhD salary + relocation & lodging allowance",
+        target_profile: "Doctoral researchers in Systems, Security, AI, HCI, Theory",
+        description: "Work side-by-side with leading researchers on open-ended fundamental research problems, leading to high-impact peer-reviewed conference publications.",
+        url: "https://www.microsoft.com/en-us/research/careers/",
+        tags: ["MSR", "Systems & AI", "Open Publication Policy"]
+      },
+      {
+        id: "fair-internship",
+        name: "Meta Fundamental AI Research (FAIR) Internship",
+        type: "Research Lab Internship",
+        organization: "Meta FAIR",
+        location: "Menlo Park, CA / New York / Paris / London",
+        cycle: "Summer 12-16 weeks (Applications open Autumn)",
+        compensation: "Industry-leading PhD stipend + housing stipend + GPU cluster access",
+        target_profile: "PhD candidates working on Computer Vision, Large Language Models, Robotics",
+        description: "Direct involvement in high-impact open-source research models (e.g. LLaMA family) with unrestricted access to state-of-the-art supercomputing clusters.",
+        url: "https://research.facebook.com/careers/",
+        tags: ["FAIR", "LLaMA", "Massive GPU Clusters", "Open Source"]
+      },
+      {
+        id: "amazon-science-internship",
+        name: "Amazon Science Applied / Research Scientist Internship",
+        type: "Research Lab Internship",
+        organization: "Amazon Science",
+        location: "Seattle, WA / Boston, MA / Cambridge, UK / Berlin",
+        cycle: "Summer & Year-round 12-week internships",
+        compensation: "Competitive PhD compensation + monthly housing stipend",
+        target_profile: "PhD students in Information Retrieval, Distributed Systems, Cloud Architecture, NLP",
+        description: "Tackle planetary-scale distributed computing, supply chain optimization, and foundational generative models deployed to millions of cloud customers.",
+        url: "https://www.amazon.science/career-paths/internships",
+        tags: ["Cloud Scale", "Distributed Systems", "AWS Research"]
+      },
+      {
+        id: "apple-mlr-internship",
+        name: "Apple Machine Learning Research Internship",
+        type: "Research Lab Internship",
+        organization: "Apple ML Research",
+        location: "Cupertino, CA / Seattle, WA / Zurich, Switzerland",
+        cycle: "Summer & Fall 12-week internships",
+        compensation: "Comprehensive PhD salary + Apple product discounts + housing",
+        target_profile: "PhD candidates in On-Device AI, Speech, Computer Vision, Privacy-Preserving ML",
+        description: "Invent novel architectures that run efficiently on edge silicon (Apple Silicon Neural Engine) while maintaining zero-compromise privacy guarantees.",
+        url: "https://machinelearning.apple.com/careers",
+        tags: ["On-Device AI", "Edge Computing", "Silicon Architecture"]
+      },
+      {
+        id: "google-io-summit",
+        name: "Google I/O Global Developer Conference",
+        type: "Global Tech Summit",
+        organization: "Google",
+        location: "Mountain View, California + Global Live Stream",
+        cycle: "Annual (Every May)",
+        compensation: "Free digital pass / Exclusive student attendance scholarships",
+        target_profile: "Computer Scientists, Software Architects, Android & Cloud Researchers",
+        description: "Google's flagship annual conference showcasing breakthrough product innovations in Gemini, Android, Cloud, Silicon, and Web development.",
+        url: "https://io.google/",
+        tags: ["Flagship Tech Summit", "Gemini & AI", "Networking"]
+      },
+      {
+        id: "aws-reinvent-summit",
+        name: "AWS re:Invent Global Cloud & AI Expo",
+        type: "Global Tech Summit",
+        organization: "Amazon Web Services",
+        location: "Las Vegas, Nevada, USA",
+        cycle: "Annual (Late November - Early December)",
+        compensation: "All-Access pass with student discounts and university grants",
+        target_profile: "Systems Researchers, Cloud Architects, Distributed Database Engineers",
+        description: "The largest global cloud computing event featuring 60,000+ engineers, deep technical breakouts, hands-on hackathons, and executive networking.",
+        url: "https://reinvent.awsevents.com/",
+        tags: ["Cloud Computing", "Massive Scale", "Industry Networking"]
+      },
+      {
+        id: "pydata-global",
+        name: "PyData Global & SciPy Technical Conferences",
+        type: "Global Tech Summit",
+        organization: "NumFOCUS",
+        location: "Global / Hybrid Virtual + Regional Hubs",
+        cycle: "Annual (Multiple regional conferences throughout the year)",
+        compensation: "Diversity scholarships and student speaker travel funding",
+        target_profile: "Open Source Developers, Computational Researchers, Python Core Contributors",
+        description: "Gathers users and developers of data analysis tools to share best practices in NumPy, PyTorch, Scikit-learn, Pandas, and scientific computing.",
+        url: "https://pydata.org/",
+        tags: ["Open Source", "Python & PyTorch", "Scientific Computing"]
+      }
+    ];
+
+    async function loadLabs() {
+      try {
+        const res = await fetch('/api/labs/search');
+        const data = await res.json();
+        allLabs = (data && data.length) ? data : MASTER_LOCAL_LABS;
+      } catch (err) {
+        allLabs = MASTER_LOCAL_LABS;
+      }
+      renderLabs();
+    }
+
+    function setType(t) {
+      activeType = t;
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        if (btn.dataset.type === t) {
+          btn.className = 'type-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm';
+        } else {
+          btn.className = 'type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition';
+        }
+      });
+      filterLabs();
+    }
+
+    function filterLabs() {
+      const q = document.getElementById('lab-search').value.trim().toLowerCase();
+      const filtered = allLabs.filter(it => {
+        if (activeType !== 'All' && it.type !== activeType) return false;
+        if (q) {
+          const searchable = `${it.name} ${it.organization} ${it.description} ${(it.tags || []).join(' ')}`.toLowerCase();
+          if (!searchable.includes(q)) return false;
+        }
+        return true;
+      });
+      renderLabs(filtered);
+    }
+
+    function renderLabs(list = allLabs) {
+      const grid = document.getElementById('labs-grid');
+      if (!list.length) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500">
+            <span class="text-3xl block mb-2">🔍</span>
+            <p class="font-medium text-sm">No research labs or summits matched your criteria.</p>
+            <button onclick="setType('All'); document.getElementById('lab-search').value='';" class="mt-3 text-xs text-indigo-600 font-semibold hover:underline">Reset Filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = list.map(it => `
+        <div class="rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition-all p-6 sm:p-7 flex flex-col justify-between group">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <span class="text-[11px] font-mono uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                ${it.type}
+              </span>
+              <span class="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200 shrink-0">
+                ${it.location}
+              </span>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition">
+              ${it.name}
+            </h3>
+            <span class="text-xs font-semibold text-slate-500 block mt-0.5 mb-3">
+              ${it.organization}
+            </span>
+
+            <p class="text-xs text-slate-600 leading-relaxed mb-4">
+              ${it.description}
+            </p>
+
+            <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 shrink-0">📅 Cycle:</span>
+                <span class="font-medium text-slate-600">${it.cycle}</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="font-bold text-slate-700 shrink-0">💼 Compensation:</span>
+                <span class="text-slate-600 font-medium">${it.compensation}</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="font-bold text-slate-700 shrink-0">🎯 Target:</span>
+                <span class="text-slate-600">${it.target_profile}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap mb-5">
+              ${(it.tags || []).map(t => `<span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${t}</span>`).join('')}
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Careers / Event Portal</span>
+            <a 
+              href="${it.url}" 
+              target="_blank" 
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-semibold transition"
+            >
+              <span>Explore Portal</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function searchLiveLabs() {
+      const q = document.getElementById('lab-search').value.trim();
+      if (!q) {
+        loadLabs();
+        return;
+      }
+      try {
+        const res = await fetch('/api/labs/search', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ query: q, item_type: activeType })
+        });
+        const data = await res.json();
+        if (data && data.length) {
+          allLabs = data;
+          renderLabs(allLabs);
+        }
+      } catch (err) {
+        console.warn('Live scout error, filtering local:', err);
+        filterLabs();
+      }
+    }
+
+    // Initialize on page load
+    loadLabs();
+  </script>
+
+</body>
+</html>

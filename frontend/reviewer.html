@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Reviewer #2 Simulator — My PhD Corner</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rose: {
+              50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 400: '#fb7185',
+              500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239'
+            },
+            amber: {
+              50: '#fffbeb', 100: '#fef3c7', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50/60 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-rose-500 selection:text-white">
+
+  <!-- Top Nav -->
+  <header class="border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center font-bold text-base group-hover:bg-rose-600 group-hover:text-white transition">
+            ⚖️
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base tracking-tight text-slate-900">Reviewer #2 Simulator</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold border border-rose-200">Engine 04</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Ruthless Pre-Submission Paper Stress-Testing</p>
+          </div>
+        </a>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="/" class="hover:text-rose-600 transition">🏠 Home Corner</a>
+        <a href="/conferences" class="hover:text-rose-600 transition">🌐 Conference Scout</a>
+        <a href="/app" class="hover:text-rose-600 transition">📖 Paper Reader</a>
+        <a href="/radar" class="hover:text-rose-600 transition">🔬 Novelty Radar</a>
+        <a href="/grants" class="hover:text-rose-600 transition">💰 Funding Radar</a>
+        <a href="/lab-connector" class="hover:text-rose-600 transition">🚀 Lab Connector</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    
+    <!-- Hero Header -->
+    <div class="text-center max-w-3xl mx-auto mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 mb-4">
+        <span>⚡ Uncompromising Academic Peer Review</span>
+        <span>•</span>
+        <span>Fix Flaws Before Real Rejection</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Stress-Test Your Paper Against <br class="hidden sm:inline" />
+        <span class="bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent">The Infamous "Reviewer #2"</span>.
+      </h1>
+      <p class="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+        Don't wait 4 months for harsh conference reviews. Paste your draft title and abstract below. Our simulated senior reviewer will critique your baselines, identify missing ablations, and generate an author rebuttal plan.
+      </p>
+    </div>
+
+    <!-- Input Form Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-8 mb-10">
+      <form onsubmit="event.preventDefault(); simulateReview();" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Draft Paper Title
+            </label>
+            <input 
+              type="text" 
+              id="rev-title"
+              required
+              placeholder="e.g. FlashAttention-X: Hardware-Aware Fast Attention with Subquadratic Memory"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm font-medium"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Target Publication Venue
+            </label>
+            <select 
+              id="rev-venue"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm font-medium bg-white"
+            >
+              <option value="NeurIPS / ICML (Top ML)">NeurIPS / ICML (Top ML)</option>
+              <option value="CVPR / ICCV (Computer Vision)">CVPR / ICCV (Computer Vision)</option>
+              <option value="ACL / EMNLP (NLP)">ACL / EMNLP (NLP)</option>
+              <option value="IEEE / ACM Transactions">IEEE / ACM Transactions</option>
+              <option value="ACM SIGCOMM / INFOCOM (Systems)">ACM SIGCOMM / INFOCOM (Systems)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Paper Abstract
+          </label>
+          <textarea 
+            id="rev-abstract"
+            rows="4"
+            required
+            placeholder="Paste your draft abstract here..."
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm font-medium"
+          ></textarea>
+        </div>
+
+        <!-- Samples -->
+        <div class="flex items-center gap-2 flex-wrap pt-1">
+          <span class="text-xs font-semibold text-slate-400">Sample Drafts:</span>
+          <button type="button" onclick="fillRevSample('UltraEdge: Speculative KV-Cache Eviction for On-Device Transformers', 'We propose UltraEdge, a memory-efficient KV-cache eviction policy that reduces RAM footprint by 65% on mobile GPUs. However, our evaluation is conducted primarily on LLaMA-2 7B on synthetic prompt benchmarks.')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+            Edge KV-Cache Paper
+          </button>
+          <button type="button" onclick="fillRevSample('Provably Robust Multi-Agent Reinforcement Learning Under Adversarial Noise', 'We establish theoretical bounds for convergence in zero-sum Markov games under stochastic channel perturbation and demonstrate 14% improvement over standard PPO.')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+            Robust RL Theory
+          </button>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button 
+            type="submit" 
+            id="review-btn"
+            class="px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-semibold text-sm shadow-md shadow-rose-500/20 flex items-center gap-2 transition active:scale-95"
+          >
+            <span>Simulate Peer Review #2</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Review Dashboard -->
+    <div id="review-results" class="space-y-8 hidden">
+      <!-- Verdict Strip -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 block mb-1">Simulated Reviewer Recommendation</span>
+          <div class="flex items-center gap-3">
+            <span id="rev-verdict" class="text-2xl font-extrabold text-rose-700">Borderline / Weak Reject</span>
+            <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold border border-slate-200" id="rev-scale">
+              Score: 5 / 10
+            </span>
+          </div>
+          <p id="rev-summary" class="text-xs sm:text-sm text-slate-600 mt-2 font-normal leading-relaxed max-w-2xl">
+            Executive critique from the reviewer...
+          </p>
+        </div>
+        <div class="shrink-0 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+          <span class="text-[11px] font-mono font-bold uppercase text-amber-800 block">Acceptance Threshold</span>
+          <span class="text-xl font-bold text-amber-900">Score 6+ Required</span>
+          <span class="text-[11px] text-amber-700 block mt-0.5">Revise key ablations to pass</span>
+        </div>
+      </div>
+
+      <!-- Critical Weaknesses (The Core of Reviewer 2) -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-rose-50/50 border border-rose-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-rose-950">Critical Flaws & Methodological Weaknesses</h3>
+            <p class="text-xs text-rose-700">The exact points Reviewer #2 will use to reject your submission if left unaddressed.</p>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-800 font-mono text-xs font-bold">Ruthless Audit</span>
+        </div>
+        <div id="weaknesses-list" class="space-y-3"></div>
+      </div>
+
+      <!-- Reviewer Questions -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-900 mb-1">Tough Author Questions</h3>
+        <p class="text-xs text-slate-500 mb-6">Prepare quantitative answers for these expected questions in the rebuttal phase.</p>
+        <div id="questions-list" class="space-y-3"></div>
+      </div>
+
+      <!-- Action Plan & Rebuttal -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Action Plan -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Checklist to Flip to "Accept"</h3>
+            <p class="text-xs text-slate-500 mb-4">Complete these before final camera-ready or submission deadline.</p>
+            <div id="action-plan-list" class="space-y-2.5 text-xs text-slate-700"></div>
+          </div>
+        </div>
+
+        <!-- Rebuttal Strategy -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-slate-900 text-white shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-lg font-bold text-white">Suggested Author Rebuttal Strategy</h3>
+              <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-emerald-400 font-bold border border-slate-700">Defense Ready</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">How to diplomatically address Reviewer #2's concerns without getting defensive.</p>
+            <div id="rebuttal-strategy" class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300 leading-relaxed font-serif italic"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    function fillRevSample(title, abstract) {
+      document.getElementById('rev-title').value = title;
+      document.getElementById('rev-abstract').value = abstract;
+    }
+
+    async function simulateReview() {
+      const title = document.getElementById('rev-title').value.trim();
+      const venue = document.getElementById('rev-venue').value;
+      const abstract = document.getElementById('rev-abstract').value.trim();
+      if (!title || !abstract) return;
+
+      const btn = document.getElementById('review-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Reviewing Manuscript...`;
+
+      try {
+        const res = await fetch('/api/reviewer/simulate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ title, abstract, target_venue: venue })
+        });
+        const data = await res.json();
+        renderReview(data);
+      } catch (err) {
+        console.warn('Backend call failed, using client fallback:', err);
+        renderReview(generateClientReviewFallback(title, abstract, venue));
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Simulate Peer Review #2</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+    }
+
+    function renderReview(data) {
+      document.getElementById('review-results').classList.remove('hidden');
+      document.getElementById('rev-verdict').textContent = data.verdict || 'Borderline / Weak Reject';
+      document.getElementById('rev-scale').textContent = `Score: ${data.overall_score || 5} / 10`;
+      document.getElementById('rev-summary').textContent = data.executive_summary || 'Review critique rendered.';
+
+      // Weaknesses
+      const weakContainer = document.getElementById('weaknesses-list');
+      weakContainer.innerHTML = (data.critical_weaknesses || []).map(w => `
+        <div class="p-4 rounded-2xl bg-white border border-rose-200/90 shadow-xs">
+          <div class="flex items-center justify-between mb-1.5">
+            <h4 class="font-bold text-sm text-rose-950">⚠️ ${w.area}</h4>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded ${w.severity === 'Critical' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">${w.severity} Severity</span>
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed">${w.critique}</p>
+        </div>
+      `).join('');
+
+      // Questions
+      const questContainer = document.getElementById('questions-list');
+      questContainer.innerHTML = (data.questions_for_authors || []).map((q, idx) => `
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800">
+          <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-mono font-bold flex items-center justify-center shrink-0">Q${idx + 1}</span>
+          <span class="font-medium pt-0.5">${q}</span>
+        </div>
+      `).join('');
+
+      // Action Plan
+      const actionContainer = document.getElementById('action-plan-list');
+      actionContainer.innerHTML = (data.concrete_action_plan_to_accept || []).map(a => `
+        <div class="flex items-center gap-2 p-2 rounded-lg bg-emerald-50/60 border border-emerald-100 text-slate-700">
+          <span class="text-emerald-600 font-bold">✔</span>
+          <span>${a}</span>
+        </div>
+      `).join('');
+
+      // Rebuttal
+      document.getElementById('rebuttal-strategy').textContent = data.simulated_author_rebuttal || 'Construct a polite, data-driven rebuttal.';
+
+      document.getElementById('review-results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateClientReviewFallback(title, abstract, venue) {
+      return {
+        overall_score: 5,
+        verdict: "Borderline / Weak Reject",
+        executive_summary: `The paper tackles an interesting question in '${title}'. However, while the motivation is clear, the current manuscript does not meet the empirical rigor and baseline depth required for ${venue}.`,
+        critical_weaknesses: [
+          {
+            area: "Missing Recent SOTA Baselines",
+            severity: "Critical",
+            critique: "The authors do not benchmark against the top 2024-2025 published approaches on standard benchmark datasets, making it impossible to substantiate claims of superiority."
+          },
+          {
+            area: "Ablation Isolation",
+            severity: "High",
+            critique: "Multiple interventions are introduced simultaneously without an ablation study showing which specific modification produces the performance delta."
+          },
+          {
+            area: "Statistical Variance Reporting",
+            severity: "Medium",
+            critique: "Experiments are reported as single-run point metrics without standard deviation error bars across distinct random seeds."
+          }
+        ],
+        questions_for_authors: [
+          "Can you present an ablation table isolating the proposed module from the baseline?",
+          "What is the exact runtime latency and memory overhead introduced on standard evaluation hardware?",
+          "How sensitive is your algorithm to hyperparameter tuning across differing dataset distributions?"
+        ],
+        concrete_action_plan_to_accept: [
+          "Incorporate 2 additional contemporary SOTA baselines into Table 1.",
+          "Add 5-seed repetition error bars to all benchmark graphs.",
+          "Provide an explicit ablation breakdown in Section 5.2."
+        ],
+        simulated_author_rebuttal: "We thank Reviewer #2 for these astute comments. To directly address the concern on baselines, we have now evaluated against [Baseline X] and [Baseline Y], showing consistent +12% improvements. Furthermore, we include an ablation table demonstrating that the core intervention accounts for 80% of the metric gains."
+      };
+    }
+  </script>
+
+</body>
+</html>
