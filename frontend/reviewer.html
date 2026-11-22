@@ -333,6 +333,17 @@
         simulated_author_rebuttal: "We thank Reviewer #2 for these astute comments. To directly address the concern on baselines, we have now evaluated against [Baseline X] and [Baseline Y], showing consistent +12% improvements. Furthermore, we include an ablation table demonstrating that the core intervention accounts for 80% of the metric gains."
       };
     }
+
+    // Pre-populate and render an interactive sample review on initial page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const sampleTitle = "UltraEdge: Speculative KV-Cache Eviction for On-Device Transformers";
+      const sampleVenue = "NeurIPS / ICML (Top ML)";
+      const sampleAbstract = "We propose UltraEdge, a memory-efficient KV-cache eviction policy that reduces RAM footprint by 65% on mobile GPUs. However, our evaluation is conducted primarily on LLaMA-2 7B on synthetic prompt benchmarks.";
+      document.getElementById('rev-title').value = sampleTitle;
+      document.getElementById('rev-venue').value = sampleVenue;
+      document.getElementById('rev-abstract').value = sampleAbstract;
+      renderReview(generateClientReviewFallback(sampleTitle, sampleAbstract, sampleVenue));
+    });
   </script>
 
 </body>

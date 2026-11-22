@@ -1045,6 +1045,7 @@ def serve_home():
 
 # Serve Intelligent Academic Conference & Event Scout standalone page
 @app.get("/conferences")
+@app.get("/conferences/")
 @app.get("/scout")
 @app.get("/events")
 def serve_conferences():
@@ -1056,6 +1057,7 @@ def serve_conferences():
 
 # Serve Zotero Audio Mentor workspace
 @app.get("/app")
+@app.get("/app/")
 @app.get("/library")
 @app.get("/reader")
 def serve_app():
@@ -1070,6 +1072,7 @@ def serve_app():
 
 # Serve Engine 03: Research Gap & Novelty Radar
 @app.get("/radar")
+@app.get("/radar/")
 @app.get("/novelty")
 def serve_radar():
     content = _load_html("radar.html")
@@ -1080,6 +1083,7 @@ def serve_radar():
 
 # Serve Engine 04: AI "Reviewer #2" Harsh Peer-Review Simulator
 @app.get("/reviewer")
+@app.get("/reviewer/")
 @app.get("/peer-review")
 def serve_reviewer():
     content = _load_html("reviewer.html")
@@ -1090,6 +1094,7 @@ def serve_reviewer():
 
 # Serve Engine 05: Fellowship, Travel Grant & Funding Radar
 @app.get("/grants")
+@app.get("/grants/")
 @app.get("/funding")
 @app.get("/fellowships")
 def serve_grants():
@@ -1101,7 +1106,9 @@ def serve_grants():
 
 # Serve Engine 06: Tech Summit & Industry Research Lab Connector
 @app.get("/lab-connector")
+@app.get("/lab-connector/")
 @app.get("/labs")
+@app.get("/labs/")
 @app.get("/careers")
 @app.get("/summits")
 def serve_lab_connector():

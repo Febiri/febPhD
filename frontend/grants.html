@@ -344,7 +344,11 @@
       }
     }
 
-    // Initialize on page load
+    // Render local master grants immediately for instant zero-flicker display
+    allGrants = [...MASTER_LOCAL_GRANTS];
+    renderGrants(allGrants);
+
+    // Then asynchronously refresh from API
     loadGrants();
   </script>
 

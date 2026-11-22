@@ -355,7 +355,11 @@
       }
     }
 
-    // Initialize on page load
+    // Render local master labs immediately for instant zero-flicker display
+    allLabs = [...MASTER_LOCAL_LABS];
+    renderLabs(allLabs);
+
+    // Then asynchronously refresh from API
     loadLabs();
   </script>
 

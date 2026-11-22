@@ -320,6 +320,15 @@
         ]
       };
     }
+
+    // Pre-populate and render an interactive sample on initial page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const sampleTopic = "Distributed LLM Speculative Decoding for Edge Devices";
+      const sampleIdea = "Adaptive draft-verification pipeline optimizing memory throughput on Apple Silicon & mobile NPUs.";
+      document.getElementById('topic-input').value = sampleTopic;
+      document.getElementById('idea-input').value = sampleIdea;
+      renderResults(generateClientGapFallback(sampleTopic, sampleIdea));
+    });
   </script>
 
 </body>
