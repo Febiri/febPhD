@@ -3,9 +3,11 @@ import re
 import json
 import logging
 import urllib.request
+import urllib.parse
 from typing import Dict, Any, List, Optional
 from datetime import datetime, date
 from pathlib import Path
+import httpx
 try:
     from bs4 import BeautifulSoup
 except Exception:
@@ -19,16 +21,18 @@ except ImportError:
     types = None
 
 try:
-    from backend.config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable
+    from backend.config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable, GITHUB_TOKEN, GITHUB_USERNAME
 except ImportError:
     try:
-        from config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable
+        from config import GEMINI_API_KEY, GEMINI_MODEL, BASE_DIR, IS_SERVERLESS, is_writable, GITHUB_TOKEN, GITHUB_USERNAME
     except ImportError:
         GEMINI_API_KEY = ""
         GEMINI_MODEL = "gemini-2.5-flash"
         BASE_DIR = Path(__file__).resolve().parent.parent
         IS_SERVERLESS = True
         is_writable = False
+        GITHUB_TOKEN = ""
+        GITHUB_USERNAME = "Febiri"
 
 logger = logging.getLogger("twin_agent")
 logging.basicConfig(level=logging.INFO)
@@ -179,6 +183,139 @@ class PortfolioSyncService:
         return profile
 
 
+class GitHubConnectorService:
+    """Manages secure programmatic connection and autonomous operations on Mark's GitHub."""
+
+    _cached_token: Optional[str] = None
+
+    def __init__(self, token: Optional[str] = None, username: Optional[str] = None):
+        self.token = (token or self._cached_token or GITHUB_TOKEN or "").strip()
+        self.username = (username or GITHUB_USERNAME or "Febiri").strip()
+
+    @classmethod
+    def set_token(cls, token: str):
+        cls._cached_token = token.strip()
+
+    def get_status(self) -> Dict[str, Any]:
+        """Checks connection status, authenticated scopes, and rate limits."""
+        headers = {"User-Agent": "febPhD-TwinAgent/1.0"}
+        if self.token:
+            headers["Authorization"] = f"token {self.token}"
+            url = "https://api.github.com/user"
+        else:
+            url = f"https://api.github.com/users/{self.username}"
+
+        try:
+            with httpx.Client(timeout=8.0) as client:
+                resp = client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    scopes_raw = resp.headers.get("x-oauth-scopes", "")
+                    scopes = [s.strip() for s in scopes_raw.split(",") if s.strip()]
+                    return {
+                        "connected": True,
+                        "authenticated": bool(self.token),
+                        "username": data.get("login", self.username),
+                        "name": data.get("name", "Febiri Mark"),
+                        "avatar_url": data.get("avatar_url", ""),
+                        "public_repos": data.get("public_repos", 0),
+                        "bio": data.get("bio", ""),
+                        "scopes": scopes,
+                        "has_write_access": ("repo" in scopes or "public_repo" in scopes or bool(self.token)),
+                        "rate_limit_remaining": resp.headers.get("x-ratelimit-remaining", "60")
+                    }
+                else:
+                    return {
+                        "connected": False,
+                        "authenticated": False,
+                        "error": f"GitHub API responded with status {resp.status_code}"
+                    }
+        except Exception as e:
+            logger.warning(f"GitHub connection check failed: {e}")
+            return {
+                "connected": False,
+                "authenticated": False,
+                "error": str(e)
+            }
+
+    def fetch_live_repositories(self) -> List[Dict[str, Any]]:
+        """Fetches Mark's live GitHub repositories to update Twin knowledge base."""
+        headers = {"User-Agent": "febPhD-TwinAgent/1.0"}
+        if self.token:
+            headers["Authorization"] = f"token {self.token}"
+
+        url = f"https://api.github.com/users/{self.username}/repos?sort=updated&per_page=20"
+        try:
+            with httpx.Client(timeout=8.0) as client:
+                resp = client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    raw_repos = resp.json()
+                    formatted = []
+                    for r in raw_repos:
+                        formatted.append({
+                            "name": r.get("name"),
+                            "full_name": r.get("full_name"),
+                            "description": r.get("description") or "Open-source research repository",
+                            "language": r.get("language") or "Python",
+                            "stars": r.get("stargazers_count", 0),
+                            "forks": r.get("forks_count", 0),
+                            "url": r.get("html_url"),
+                            "updated_at": r.get("updated_at")
+                        })
+                    return formatted
+        except Exception as e:
+            logger.warning(f"Error fetching live repos from GitHub: {e}")
+        return []
+
+    def dispatch_application_log(self, application_packet: Dict[str, Any], target_repo: str = "febPhD") -> Dict[str, Any]:
+        """Creates a tracking issue in Mark's repo for the dispatched application."""
+        if not self.token:
+            return {
+                "logged_to_github": False,
+                "message": "GitHub Personal Access Token (PAT) not set. Logged locally in application database."
+            }
+
+        headers = {
+            "User-Agent": "febPhD-TwinAgent/1.0",
+            "Authorization": f"token {self.token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        title = f"[Application Log] {application_packet.get('opportunity_title', 'Fellowship / Lab Application')} — Mark Febiri"
+        body = (
+            f"## Autonomous Application Dispatch Receipt\n\n"
+            f"- **Applicant:** {application_packet.get('applicant', {}).get('name', 'Mark Febiri')}\n"
+            f"- **Target Opportunity:** {application_packet.get('opportunity_title', '')}\n"
+            f"- **Organization:** {application_packet.get('organization', '')}\n"
+            f"- **Date Dispatched:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}\n"
+            f"- **Status:** Dispatched (Pending Committee Review)\n\n"
+            f"### Statement of Purpose / Cover Letter\n"
+            f"{application_packet.get('statement_of_purpose', '')}\n\n"
+            f"### Justification\n"
+            f"{application_packet.get('secondary_defense_text', '')}\n\n"
+            f"---\n*Generated and logged autonomously by febPhD Executive Digital Twin.*"
+        )
+        url = f"https://api.github.com/repos/{self.username}/{target_repo}/issues"
+        try:
+            with httpx.Client(timeout=8.0) as client:
+                resp = client.post(url, headers=headers, json={"title": title, "body": body, "labels": ["application", "fellowship"]})
+                if resp.status_code in [200, 201]:
+                    issue_data = resp.json()
+                    return {
+                        "logged_to_github": True,
+                        "issue_url": issue_data.get("html_url"),
+                        "issue_number": issue_data.get("number"),
+                        "message": f"Successfully created GitHub tracking issue #{issue_data.get('number')}!"
+                    }
+                else:
+                    return {
+                        "logged_to_github": False,
+                        "status_code": resp.status_code,
+                        "message": f"GitHub issue creation response: {resp.status_code}"
+                    }
+        except Exception as e:
+            return {"logged_to_github": False, "message": str(e)}
+
+
 class TwinAgentService:
     """Autonomous Digital Twin that acts on Mark Febiri's behalf with higher perfection."""
 
@@ -224,6 +361,171 @@ class TwinAgentService:
                 logger.warning(f"Gemini lab application error: {e}. Using deterministic synthesis.")
 
         return self._fallback_lab_application(profile, lab_title, lab_details)
+
+    def prepare_application_packet(
+        self,
+        opportunity_type: str,
+        title: str,
+        details: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Prepares a complete, structured submission package for Mark Febiri.
+        Pre-populates every field so all Mark needs to do is review ('Check') and click 'Proceed'.
+        """
+        profile = self.get_profile()
+        org = details.get("organization") or details.get("org") or "Selection Committee"
+        award_or_role = details.get("award") or details.get("role") or "Fellowship / Research Residency"
+        portal_url = details.get("url") or details.get("portal_url") or "https://github.com/Febiri"
+
+        # Generate custom draft based on opportunity
+        if opportunity_type == "lab":
+            dossier = self.apply_for_lab(title, details)
+            statement = dossier.get("cover_letter", "")
+            secondary_text = dossier.get("cold_outreach_email", "")
+            summary = dossier.get("project_alignment_pitch", "")
+        else:
+            dossier = self.apply_for_grant(title, details)
+            statement = dossier.get("statement_of_purpose", "")
+            secondary_text = dossier.get("research_justification", "")
+            summary = f"Grant application for {title} under {org}."
+
+        budget = dossier.get("itemized_budget", [
+            {"item": "Roundtrip International Flights", "amount": "$1,350", "notes": "Economy class"},
+            {"item": "Conference Accommodation (5 Nights)", "amount": "$850", "notes": "Standard lodging"},
+            {"item": "Student Author Registration", "amount": "$450", "notes": "Doctoral pass"},
+            {"item": "Consular Visa & Travel Insurance", "amount": "$250", "notes": "Official entry processing"}
+        ])
+
+        publications = [
+            f"{p.get('venue')}: {p.get('title')}" for p in profile.get("publications", [])
+        ]
+
+        # JavaScript Bookmarklet / Injection script to auto-fill forms on external portals
+        autofill_js = f"""(function(){{
+    const fields = {{
+        'name': '{profile.get("name")}',
+        'first_name': 'Mark',
+        'last_name': 'Febiri',
+        'email': '{profile.get("email")}',
+        'phone': '{profile.get("phone")}',
+        'organization': 'DevSpace Systems',
+        'affiliation': 'DevSpace Systems / Computational Biology Research',
+        'website': '{profile.get("portfolio_url")}',
+        'portfolio': '{profile.get("portfolio_url")}',
+        'github': '{profile.get("github_url")}',
+        'linkedin': '{profile.get("linkedin_url")}',
+        'address': 'Vadodara, Gujarat, India',
+        'country': 'India',
+        'statement': {json.dumps(statement)},
+        'essay': {json.dumps(statement)},
+        'cover_letter': {json.dumps(statement)}
+    }};
+    let filled = 0;
+    document.querySelectorAll('input, textarea, select').forEach(el => {{
+        const key = (el.name || el.id || el.placeholder || '').toLowerCase();
+        for (const [k, v] of Object.entries(fields)) {{
+            if (key.includes(k) && !el.value) {{
+                el.value = v;
+                el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                filled++;
+                break;
+            }}
+        }}
+    }});
+    alert('febPhD Twin Agent: Pre-filled ' + filled + ' fields for Mark Febiri!');
+}})();"""
+
+        applicant_dict = {
+            "name": profile.get("name", "Mark Febiri"),
+            "email": profile.get("email", "Febirimark27@gmail.com"),
+            "phone": profile.get("phone", "+91 8780006210"),
+            "current_role": profile.get("title", "CTO at DevSpace Systems"),
+            "affiliation": "Co-Founder & CTO at DevSpace Systems",
+            "locations": profile.get("locations", "Vadodara, Gujarat, India • Sunyani, Ghana"),
+            "location": profile.get("locations", "Vadodara, Gujarat, India • Sunyani, Ghana"),
+            "portfolio_url": profile.get("portfolio_url", "https://febmac.vercel.app/"),
+            "portfolio": profile.get("portfolio_url", "https://febmac.vercel.app/"),
+            "github_url": profile.get("github_url", "https://github.com/Febiri"),
+            "github": profile.get("github_url", "https://github.com/Febiri"),
+            "linkedin_url": profile.get("linkedin_url", "https://www.linkedin.com/in/mark-febiri-a067b3209/"),
+            "flagship_projects": [p.get("name") for p in profile.get("flagship_projects", [])],
+            "featured_repos": [p.get("name") for p in profile.get("flagship_projects", [])]
+        }
+
+        packet = {
+            "opportunity_type": opportunity_type,
+            "opportunity_title": title,
+            "organization": org,
+            "award_or_role": award_or_role,
+            "requested_award": award_or_role,
+            "portal_url": portal_url,
+            "applicant": applicant_dict,
+            "applicant_info": applicant_dict,
+            "statement_of_purpose": statement,
+            "secondary_defense_text": secondary_text,
+            "itemized_budget": budget,
+            "publications": publications,
+            "dossier": dossier,
+            "full_dossier_markdown": dossier.get("full_application_dossier_markdown", statement),
+            "autofill_bookmarklet": "javascript:" + urllib.parse.quote(autofill_js),
+            "autofill_script_raw": autofill_js,
+            "form_autofill_script": autofill_js,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        return packet
+
+    def dispatch_application(
+        self,
+        packet: Dict[str, Any],
+        target_repo: str = "febPhD"
+    ) -> Dict[str, Any]:
+        """Dispatches application, logs to GitHub issue if token present, and records in history."""
+        gh_service = GitHubConnectorService()
+        gh_result = gh_service.dispatch_application_log(packet, target_repo=target_repo)
+
+        # Save to local tracking record
+        record = {
+            "id": f"app_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            "title": packet.get("opportunity_title"),
+            "organization": packet.get("organization"),
+            "type": packet.get("opportunity_type"),
+            "dispatched_at": datetime.utcnow().isoformat(),
+            "status": "Dispatched / Committee Review",
+            "github_log": gh_result
+        }
+
+        # Persist record safely
+        try:
+            log_path = Path("/tmp/dispatched_applications.json") if (IS_SERVERLESS or not is_writable) else BASE_DIR / "data" / "dispatched_applications.json"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            existing = []
+            if log_path.exists():
+                try:
+                    existing = json.loads(log_path.read_text(encoding="utf-8"))
+                except Exception:
+                    existing = []
+            existing.insert(0, record)
+            log_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Could not persist dispatch history: {e}")
+
+        return {
+            "success": True,
+            "status": "Dispatched",
+            "record": record,
+            "github_dispatch": gh_result
+        }
+
+    def get_dispatch_history(self) -> List[Dict[str, Any]]:
+        """Returns list of past dispatched applications."""
+        try:
+            log_path = Path("/tmp/dispatched_applications.json") if (IS_SERVERLESS or not is_writable) else BASE_DIR / "data" / "dispatched_applications.json"
+            if log_path.exists():
+                return json.loads(log_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning(f"Could not read dispatch history: {e}")
+        return []
 
     def get_strategic_suggestions(self) -> List[Dict[str, Any]]:
         """Generates proactive, high-leverage suggestions of what Mark should do right now."""

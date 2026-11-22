@@ -54,7 +54,7 @@
               <span class="font-extrabold text-base tracking-tight text-slate-900">PhD Digital Twin & Co-Pilot</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 font-bold border border-brand-200">Engine 07</span>
             </div>
-            <p class="text-[11px] text-slate-500">Autonomous Mark Febiri AI • Portfolio Synced</p>
+            <p class="text-[11px] text-slate-500">Autonomous Mark Febiri AI • GitHub & Portfolio Connected</p>
           </div>
         </a>
       </div>
@@ -81,33 +81,50 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>AUTONOMOUS EXECUTIVE TWIN</span>
           </span>
-          <span class="text-xs text-slate-400 font-mono">Linked to febmac.vercel.app</span>
+          <span class="text-xs text-slate-400 font-mono">Linked to febmac.vercel.app & github.com/Febiri</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
           Mark Febiri <span class="text-brand-400 font-light">Digital Twin Studio</span>
         </h1>
         <p class="mt-2 text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-          Your personal AI executive alter ego operating in <strong>higher perfection</strong>. Ingests your entire background (CTO at DevSpace Systems, Neuro-Symbolic RAG, ClawBio Multi-Omics), applies for grants and labs on your behalf, and proactively guides your PhD trajectory.
+          Your personal AI executive alter ego operating in <strong>higher perfection</strong>. Autonomous human-in-the-loop pipeline: pre-fills online applications, presents them for your review, and dispatches tracking issues directly to your GitHub (<code class="text-brand-300">github.com/Febiri/febPhD</code>) upon your <strong>"Proceed"</strong> command.
         </p>
       </div>
 
-      <!-- Sync Status & Re-Sync Button -->
-      <div class="shrink-0 p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col gap-2.5 sm:min-w-[240px]">
+      <!-- Sync Status & GitHub Connector Control Box -->
+      <div class="shrink-0 p-4 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-col gap-2.5 sm:min-w-[280px]">
         <div class="flex items-center justify-between text-xs">
           <span class="text-slate-400">Knowledge Brain:</span>
           <span class="text-emerald-400 font-bold font-mono">100% Synced</span>
         </div>
-        <div class="text-[11px] text-slate-300 font-mono truncate">
-          🔗 febmac.vercel.app
+        <div class="text-[11px] text-slate-300 font-mono truncate flex items-center justify-between">
+          <span>🔗 febmac.vercel.app</span>
+          <span class="text-slate-500">CTO Profile</span>
         </div>
-        <button 
-          type="button" 
-          id="sync-btn"
-          onclick="syncPortfolio()"
-          class="w-full px-3 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5"
-        >
-          <span>🔄 Live Re-Sync Portfolio</span>
-        </button>
+        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-700/60">
+          <span class="text-slate-400">GitHub Pipeline:</span>
+          <span id="gh-status-badge" class="font-mono font-bold text-xs text-brand-300 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Checking...
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button 
+            type="button" 
+            id="sync-btn"
+            onclick="syncPortfolio()"
+            class="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-[11px] shadow-sm transition flex items-center justify-center gap-1"
+          >
+            <span>🔄 Re-Sync</span>
+          </button>
+          <button 
+            type="button" 
+            id="open-gh-modal-btn"
+            onclick="openGitHubModal()"
+            class="px-2.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-brand-600 hover:from-purple-500 hover:to-brand-500 text-white font-bold text-[11px] shadow-sm transition flex items-center justify-center gap-1"
+          >
+            <span>🔑 GitHub PAT</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -116,11 +133,14 @@
       <button onclick="switchTab('apply')" id="tab-btn-apply" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition bg-brand-600 text-white shadow-md shadow-brand-500/20" data-tab="apply">
         <span>📝 Apply On My Behalf</span>
       </button>
+      <button onclick="switchTab('history')" id="tab-btn-history" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="history">
+        <span>📜 Dispatch Audit Log</span>
+      </button>
       <button onclick="switchTab('suggestions')" id="tab-btn-suggestions" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="suggestions">
         <span>🎯 Strategic Advisory</span>
       </button>
       <button onclick="switchTab('brain')" id="tab-btn-brain" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="brain">
-        <span>🧠 Knowledge Brain</span>
+        <span>🧠 Knowledge Brain & Repos</span>
       </button>
       <button onclick="switchTab('chat')" id="tab-btn-chat" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="chat">
         <span>💬 Talk to Your Twin</span>
@@ -134,8 +154,8 @@
       <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Autonomous Application Drafter</h3>
-            <p class="text-xs text-slate-500">Select any grant or research lab, or enter any opportunity. Your Twin writes the full dossier on your behalf.</p>
+            <h3 class="text-lg font-bold text-slate-900">Autonomous Application & Pre-Fill Engine</h3>
+            <p class="text-xs text-slate-500">Your Twin compiles the entire application package, enters your information, and prepares it for your <strong>"Check & Proceed"</strong> review.</p>
           </div>
           
           <div class="flex items-center gap-2">
@@ -152,7 +172,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="md:col-span-2">
             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Select or Type Target Opportunity Name
+              Target Opportunity Title or Scheme
             </label>
             <input 
               type="text" 
@@ -163,7 +183,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Quick Pick Opportunity
+              Quick Select Preset Opportunity
             </label>
             <select 
               id="opp-preset-select" 
@@ -175,28 +195,166 @@
           </div>
         </div>
 
-        <div class="flex justify-end pt-2">
-          <button 
-            type="button" 
-            id="generate-app-btn"
-            onclick="generateAutonomousApplication()"
-            class="px-7 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-sm shadow-md shadow-brand-500/20 flex items-center gap-2 transition active:scale-95"
-          >
-            <span>⚡ Apply on My Behalf & Draft Dossier</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          </button>
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Pre-fills: Mark Febiri • DevSpace Systems CTO • Neuro-Symbolic RAG • ClawBio</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="prepare-app-btn"
+              onclick="prepareAndReviewApplication()"
+              class="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-bold text-sm shadow-md shadow-brand-500/20 flex items-center gap-2 transition active:scale-95"
+            >
+              <span>⚡ Autonomous Pre-Fill & Review ("Check & Proceed")</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Application Results Container -->
+      <!-- ================= CHECK & PROCEED REVIEW CONSOLE ================= -->
+      <div id="check-proceed-container" class="space-y-6 hidden">
+        
+        <!-- Human-in-the-Loop Review Banner -->
+        <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-900 via-slate-900 to-slate-900 text-white border border-emerald-500/40 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-mono text-[10px] font-bold">
+                HUMAN-IN-THE-LOOP CHECKPOINT
+              </span>
+              <span class="text-xs text-slate-300 font-mono">Status: Pre-Filled & Ready</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-white">Review & Check Pre-Filled Application</h3>
+            <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              Your Twin has completed and entered your information across all application fields. Review or adjust any text below. When satisfied, click <strong>"Check & Proceed"</strong> to log to GitHub and dispatch.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              onclick="copyBookmarkletScript(this)"
+              class="px-4 py-2.5 rounded-xl bg-emerald-700/80 hover:bg-emerald-600 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-emerald-500"
+              title="Copy JavaScript Bookmarklet to auto-fill online forms with 1-click in your browser"
+            >
+              <span>📋 Copy 1-Click Form Auto-Fill</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="copyCheckProceedJson(this)"
+              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+            >
+              <span>📋 Copy JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pre-Filled Interactive Form Card -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+              <span>👤</span> Applicant Dossier & Pre-Entered Information
+            </h4>
+            <span class="text-xs text-emerald-600 font-semibold font-mono">Editable by Mark</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Full Legal Name</label>
+              <input type="text" id="cp-name" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Primary Email</label>
+              <input type="email" id="cp-email" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Contact Phone</label>
+              <input type="text" id="cp-phone" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Primary Affiliation / Title</label>
+              <input type="text" id="cp-org" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Locations / Citizenship</label>
+              <input type="text" id="cp-location" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Portfolio Website</label>
+              <input type="url" id="cp-portfolio" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">GitHub Profile</label>
+              <input type="url" id="cp-github" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Target Scheme / Opp</label>
+              <input type="text" id="cp-target-title" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-brand-700 focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Requested Funding / Award</label>
+              <input type="text" id="cp-target-award" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-emerald-700 focus:bg-white focus:ring-2 focus:ring-brand-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Flagship Repositories & Publication Citations</label>
+            <input type="text" id="cp-repos" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono focus:bg-white focus:ring-2 focus:ring-brand-500">
+          </div>
+
+          <!-- Long-form Dossier Sections -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
+                <span>📜 Statement of Purpose / Cover Pitch</span>
+                <button type="button" onclick="copyElementText('cp-sop', this)" class="text-[10px] text-brand-600 font-bold hover:underline">Copy</button>
+              </label>
+              <textarea id="cp-sop" rows="6" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs font-serif leading-relaxed focus:bg-white focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
+                <span>🔬 Scientific Justification & Lab Alignment</span>
+                <button type="button" onclick="copyElementText('cp-alignment', this)" class="text-[10px] text-brand-600 font-bold hover:underline">Copy</button>
+              </label>
+              <textarea id="cp-alignment" rows="6" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs font-serif leading-relaxed focus:bg-white focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+          </div>
+
+          <!-- THE PROCEED BUTTON -->
+          <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="text-xs text-slate-500">
+              <span class="font-bold text-slate-800">Autonomous Target Repo:</span> <code class="font-mono text-purple-700 font-semibold">Febiri/febPhD</code> (or connected PAT repository).
+            </div>
+
+            <button 
+              type="button" 
+              id="proceed-dispatch-btn"
+              onclick="executeProceedDispatch()"
+              class="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2.5 transition transform active:scale-95"
+            >
+              <span>✅ Check & Proceed (Dispatch Application)</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Application Dossier Results Container -->
       <div id="app-results-container" class="space-y-6 hidden">
         
         <!-- Action Header -->
         <div class="p-6 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <span class="text-[10px] font-mono uppercase text-brand-300 block mb-1">Generated by Mark Febiri Digital Twin</span>
-            <h3 id="app-result-title" class="text-xl font-bold text-white">Application Dossier</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Crafted with first-person executive voice citing portfolio projects and publications.</p>
+            <h3 id="app-result-title" class="text-xl font-bold text-white">Full Application Dossier</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Written in first-person executive voice citing your DevSpace CTO achievements, Neuro-Symbolic RAG, and publications.</p>
           </div>
           <div class="flex items-center gap-2">
             <button 
@@ -211,7 +369,7 @@
               onclick="downloadApplicationDossier()"
               class="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5"
             >
-              <span>⬇️ Download Dossier (.md)</span>
+              <span>⬇️ Download (.md)</span>
             </button>
           </div>
         </div>
@@ -285,7 +443,25 @@
 
     </div>
 
-    <!-- ================= PANEL 2: STRATEGIC ADVISORY ================= -->
+    <!-- ================= PANEL 2: DISPATCH AUDIT LOG ================= -->
+    <div id="panel-history" class="studio-panel space-y-6 hidden">
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-[10px] font-mono uppercase text-brand-600 font-bold">Autonomous Execution History</span>
+          <h3 class="text-lg font-bold text-slate-900 mt-0.5">Dispatched Applications & GitHub Logs</h3>
+          <p class="text-xs text-slate-500">Live records of all applications prepared, checked, and dispatched to committees and GitHub issues.</p>
+        </div>
+        <button onclick="loadDispatchHistory()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 self-start sm:self-auto">
+          <span>🔄 Refresh History</span>
+        </button>
+      </div>
+
+      <div id="dispatch-history-list" class="space-y-4">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </div>
+
+    <!-- ================= PANEL 3: STRATEGIC ADVISORY ================= -->
     <div id="panel-suggestions" class="studio-panel space-y-6 hidden">
       <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
@@ -301,7 +477,7 @@
       <div id="suggestions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </div>
 
-    <!-- ================= PANEL 3: KNOWLEDGE BRAIN ================= -->
+    <!-- ================= PANEL 4: KNOWLEDGE BRAIN & REPOSITORIES ================= -->
     <div id="panel-brain" class="studio-panel space-y-6 hidden">
       
       <!-- Profile Header -->
@@ -328,23 +504,25 @@
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
             <a href="https://github.com/Febiri" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold transition flex items-center gap-1.5">
-              <span>💻 GitHub</span>
+              <span>💻 GitHub (@Febiri)</span>
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
           </div>
         </div>
 
-        <!-- Flagship Projects -->
+        <!-- Live GitHub Repositories Ingested -->
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Flagship Open-Source Repositories Ingested</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Live Repositories Synced with Twin</h4>
+            <button onclick="loadLiveGitHubRepos()" class="text-xs text-brand-600 font-bold hover:underline">Refresh Repos</button>
+          </div>
+          <div id="github-repos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div class="flex items-center justify-between mb-1.5">
                 <span class="font-bold text-sm text-slate-900">neuro-symbolic-rag</span>
                 <span class="text-[10px] font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">Featured AI</span>
               </div>
-              <p class="text-xs text-slate-600 leading-relaxed mb-3">Enterprise AI framework combining stochastic LLM reasoning with deterministic symbolic logic verification and scientific literature retrieval (PubMed & arXiv).</p>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">Enterprise AI framework combining stochastic LLM reasoning with deterministic symbolic logic verification and PubMed literature grounding.</p>
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Python</span>
                 <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">FastAPI</span>
@@ -357,14 +535,13 @@
                 <span class="font-bold text-sm text-slate-900">ClawBio-Pipeline</span>
                 <span class="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Multi-Omics</span>
               </div>
-              <p class="text-xs text-slate-600 leading-relaxed mb-3">Production multi-omics workflow orchestrator with ClinVar ACMG variant annotation, Biopython integration, and sequence alignment.</p>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">Production multi-omics workflow orchestrator with ClinVar ACMG variant annotation and automated pipeline execution.</p>
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Biopython</span>
                 <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">ClinVar</span>
                 <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Genomics</span>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -395,7 +572,7 @@
 
     </div>
 
-    <!-- ================= PANEL 4: CHAT WITH YOUR TWIN ================= -->
+    <!-- ================= PANEL 5: CHAT WITH YOUR TWIN ================= -->
     <div id="panel-chat" class="studio-panel space-y-4 hidden">
       <div class="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col h-[560px]">
         
@@ -407,7 +584,7 @@
             </div>
             <div>
               <h4 class="text-sm font-bold text-slate-900">Mark Febiri Executive Twin</h4>
-              <p class="text-[10px] text-slate-400">High-perfection alter ego with full portfolio recall</p>
+              <p class="text-[10px] text-slate-400">High-perfection alter ego with full portfolio & GitHub recall</p>
             </div>
           </div>
           <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
@@ -418,7 +595,7 @@
           <div class="flex items-start gap-2.5">
             <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0">MF</span>
             <div class="p-3.5 rounded-2xl bg-slate-100 text-slate-800 max-w-xl leading-relaxed">
-              Hello Mark! I am your Autonomous Digital Twin, synced with your portfolio at <a href="https://febmac.vercel.app/" target="_blank" class="text-brand-600 font-bold underline">febmac.vercel.app</a>. I know your work across Neuro-Symbolic RAG, the ClawBio multi-omics orchestrator, and your leadership as CTO of DevSpace Systems. What strategic task can I draft or execute for you today?
+              Hello Mark! I am your Autonomous Digital Twin, synced with your portfolio at <a href="https://febmac.vercel.app/" target="_blank" class="text-brand-600 font-bold underline">febmac.vercel.app</a> and your GitHub (<a href="https://github.com/Febiri" target="_blank" class="text-brand-600 font-bold underline">github.com/Febiri</a>). I know your work across Neuro-Symbolic RAG, the ClawBio multi-omics orchestrator, and your leadership as CTO of DevSpace Systems. What task can I prepare or dispatch for you today?
             </div>
           </div>
         </div>
@@ -458,11 +635,179 @@
 
   </main>
 
+  <!-- ================= GITHUB PAT & PRIVILEGES MODAL ================= -->
+  <div id="github-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-lg font-bold">
+            🐙
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">GitHub Autonomous Pipeline</h3>
+            <p class="text-xs text-slate-500">Programmatic execution pipeline for @Febiri</p>
+          </div>
+        </div>
+        <button onclick="closeGitHubModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-brand-50/80 border border-brand-200/70 text-xs text-brand-900 leading-relaxed">
+        <strong>Direct Autonomous Execution:</strong> Enter your GitHub Personal Access Token (PAT) with <code class="bg-white px-1.5 py-0.5 rounded border border-brand-200 text-brand-700 font-mono">repo</code> scope. This empowers your Twin to autonomously open tracking issues, log dossiers to <code class="font-bold">Febiri/febPhD</code>, and sync repositories.
+      </div>
+
+      <div class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            GitHub Username
+          </label>
+          <input 
+            type="text" 
+            id="gh-username-input" 
+            value="Febiri"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+            Target Tracking Repository
+          </label>
+          <input 
+            type="text" 
+            id="gh-repo-input" 
+            value="febPhD"
+            placeholder="e.g. febPhD"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+          >
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Personal Access Token (PAT)
+            </label>
+            <a href="https://github.com/settings/tokens/new?scopes=repo&description=febPhD_Twin_Agent" target="_blank" class="text-[11px] text-brand-600 font-bold hover:underline">
+              Generate Token ↗
+            </a>
+          </div>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="gh-token-input" 
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none pr-10"
+            >
+            <button 
+              type="button" 
+              onclick="toggleTokenVisibility()"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            >
+              👁️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gh-modal-status-box" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 flex items-center justify-between">
+        <span>Status: Initializing...</span>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button 
+          type="button" 
+          onclick="closeGitHubModal()"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          id="gh-save-btn"
+          onclick="saveGitHubCredentials()"
+          class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+        >
+          <span>💾 Connect & Verify</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= DISPATCH SUCCESS & LAUNCHER MODAL ================= -->
+  <div id="dispatch-receipt-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in duration-200">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold">
+          🚀
+        </div>
+        <div>
+          <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-mono font-bold border border-emerald-200">
+            ✅ DISPATCH SUCCESSFUL
+          </div>
+          <h3 class="font-extrabold text-slate-900 text-lg mt-0.5">Application Processed & Logged!</h3>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Your Digital Twin has completed the autonomous execution cycle. The formal application tracking issue and markdown dossier have been dispatched.
+      </p>
+
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs font-mono">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Target Opportunity:</span>
+          <span id="receipt-opp-title" class="font-bold text-slate-900">Google PhD Fellowship</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Tracking Status:</span>
+          <span class="text-emerald-700 font-bold">Dispatched / Committee Review</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">GitHub Log:</span>
+          <span id="receipt-github-link" class="text-brand-600 font-bold underline truncate max-w-[200px]">github.com/Febiri/febPhD</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button 
+          type="button" 
+          onclick="copyBookmarkletScript(this)"
+          class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+        >
+          <span>📋 Copy 1-Click Form Auto-Fill Bookmarklet</span>
+        </button>
+
+        <a 
+          id="receipt-direct-issue-btn"
+          href="https://github.com/Febiri/febPhD/issues"
+          target="_blank"
+          class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition flex items-center justify-center gap-1.5"
+        >
+          <span>🐙 View Tracking Issue on GitHub ↗</span>
+        </a>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-100">
+        <button 
+          type="button" 
+          onclick="closeDispatchReceiptModal()"
+          class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <script>
     let activeStudioTab = 'apply';
     let currentApplyMode = 'grant';
     let latestDossier = null;
+    let latestPacket = null;
     let chatHistory = [];
+    let gitHubStatus = null;
 
     const PRESET_OPPORTUNITIES = {
       grant: [
@@ -494,14 +839,22 @@
       });
 
       document.querySelectorAll('.studio-panel').forEach(p => p.classList.add('hidden'));
-      document.getElementById('panel-' + tab).classList.remove('hidden');
+      const activePanel = document.getElementById('panel-' + tab);
+      if (activePanel) activePanel.classList.remove('hidden');
 
       if (tab === 'suggestions') {
         loadStrategicSuggestions();
       } else if (tab === 'brain') {
         loadBrainProfile();
+        loadLiveGitHubRepos();
+      } else if (tab === 'history') {
+        loadDispatchHistory();
       }
     }
+
+    // Alias for external link compatibility
+    function switchStudioTab(tab) { switchTab(tab); }
+    function switchApplyMode(mode) { setApplyMode(mode); }
 
     function setApplyMode(mode) {
       currentApplyMode = mode;
@@ -522,7 +875,7 @@
       const select = document.getElementById('opp-preset-select');
       const list = PRESET_OPPORTUNITIES[currentApplyMode] || [];
       select.innerHTML = '<option value="">-- Choose from Presets --</option>' + list.map(item => `
-        <option value="${item.title}">${item.title} (${item.org})</option>
+        <option value="${item.title}">${item.title} (${item.org || item.loc || ''})</option>
       `).join('');
     }
 
@@ -532,55 +885,302 @@
       }
     }
 
-    async function syncPortfolio() {
-      const btn = document.getElementById('sync-btn');
-      btn.disabled = true;
-      btn.innerHTML = `<span>⏳ Crawling febmac.vercel.app...</span>`;
+    // ================= GITHUB STATUS & CONNECTOR =================
+    async function checkGitHubStatus() {
+      const badge = document.getElementById('gh-status-badge');
       try {
-        const res = await fetch('/api/twin/sync', { method: 'POST' });
+        const res = await fetch('/api/twin/github/status');
         const data = await res.json();
-        alert('Digital Twin brain successfully re-synced with https://febmac.vercel.app/!');
-        loadBrainProfile();
+        gitHubStatus = data;
+        if (data.authenticated) {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span class="text-emerald-300">Connected (@${data.username})</span>`;
+        } else {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400"></span> <span class="text-cyan-300">Public (@${data.username})</span>`;
+        }
       } catch (err) {
-        console.warn('Sync failed:', err);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>🔄 Live Re-Sync Portfolio</span>`;
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> <span class="text-slate-400">Offline</span>`;
       }
     }
 
-    async function generateAutonomousApplication() {
+    function openGitHubModal() {
+      document.getElementById('github-modal').classList.remove('hidden');
+      const statusBox = document.getElementById('gh-modal-status-box');
+      if (gitHubStatus) {
+        statusBox.innerHTML = `<span>Account: @${gitHubStatus.username} • Authenticated: <strong>${gitHubStatus.authenticated ? 'Yes (Full Write Privileges)' : 'No (Public Read Only)'}</strong></span>`;
+      }
+    }
+
+    function closeGitHubModal() {
+      document.getElementById('github-modal').classList.add('hidden');
+    }
+
+    function toggleTokenVisibility() {
+      const input = document.getElementById('gh-token-input');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function saveGitHubCredentials() {
+      const token = document.getElementById('gh-token-input').value.trim();
+      const username = document.getElementById('gh-username-input').value.trim() || 'Febiri';
+      const btn = document.getElementById('gh-save-btn');
+      const statusBox = document.getElementById('gh-modal-status-box');
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying with GitHub...';
+
+      try {
+        const res = await fetch('/api/twin/github/connect', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ token, username })
+        });
+        const data = await res.json();
+        if (data.authenticated) {
+          statusBox.innerHTML = `<span class="text-emerald-700 font-bold">✅ Verified @${data.username}! Scopes: ${data.scopes || 'repo'}</span>`;
+          checkGitHubStatus();
+          setTimeout(() => closeGitHubModal(), 1200);
+        } else {
+          statusBox.innerHTML = `<span class="text-amber-700">⚠️ ${data.message || 'Token could not be verified'}</span>`;
+        }
+      } catch (err) {
+        statusBox.innerHTML = `<span class="text-rose-700">Error connecting to GitHub API</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>💾 Connect & Verify</span>`;
+      }
+    }
+
+    async function loadLiveGitHubRepos() {
+      const grid = document.getElementById('github-repos-grid');
+      try {
+        const res = await fetch('/api/twin/github/repos');
+        const data = await res.json();
+        const repos = data.repos || [];
+        if (repos.length > 0) {
+          grid.innerHTML = repos.slice(0, 8).map(r => `
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-300 transition flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <a href="${r.html_url}" target="_blank" class="font-bold text-sm text-slate-900 hover:text-brand-600 transition flex items-center gap-1">
+                    <span>${r.name}</span>
+                    <span class="text-[10px] text-slate-400">↗</span>
+                  </a>
+                  <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">★ ${r.stargazers_count || 0}</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed mb-3 line-clamp-2">${r.description || 'Mark Febiri open-source research and engineering repository.'}</p>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-brand-700 font-bold">${r.language || 'Python'}</span>
+                <span class="text-[10px] text-slate-400 font-mono">Updated ${new Date(r.updated_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Failed to load GitHub repos:', err);
+      }
+    }
+
+    // ================= AUTONOMOUS "CHECK & PROCEED" PIPELINE =================
+    async function prepareAndReviewApplication() {
       const oppTitle = document.getElementById('target-opp-title').value.trim();
       if (!oppTitle) {
-        alert('Please enter or select a target grant or lab opportunity.');
+        alert('Please enter or select a target opportunity title first.');
         return;
       }
 
-      const btn = document.getElementById('generate-app-btn');
+      const btn = document.getElementById('prepare-app-btn');
       btn.disabled = true;
-      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Twin Drafting Full Application on Your Behalf...`;
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Pre-Filling Application on Your Behalf...`;
 
       try {
-        const endpoint = currentApplyMode === 'grant' ? '/api/twin/apply-grant' : '/api/twin/apply-lab';
-        const payload = currentApplyMode === 'grant' 
-          ? { grant_title: oppTitle, grant_details: { organization: 'Sponsoring Committee' } }
-          : { lab_title: oppTitle, lab_details: { organization: 'Research Lab' } };
-
-        const res = await fetch(endpoint, {
+        const res = await fetch('/api/twin/prepare-application', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            opportunity_type: currentApplyMode,
+            title: oppTitle,
+            details: { organization: 'Selection Committee' }
+          })
         });
-        const data = await res.json();
-        renderApplicationDossier(data, currentApplyMode);
+        const packet = await res.json();
+        latestPacket = packet;
+        latestDossier = packet.dossier || packet;
+
+        // Populate Check & Proceed form fields
+        const info = packet.applicant_info || {};
+        document.getElementById('cp-name').value = info.name || 'Mark Febiri';
+        document.getElementById('cp-email').value = info.email || 'Febirimark27@gmail.com';
+        document.getElementById('cp-phone').value = info.phone || '+91 97730 46421';
+        document.getElementById('cp-org').value = info.affiliation || 'Co-Founder & CTO at DevSpace Systems';
+        document.getElementById('cp-location').value = info.location || 'Vadodara, India • Sunyani, Ghana';
+        document.getElementById('cp-portfolio').value = info.portfolio || 'https://febmac.vercel.app/';
+        document.getElementById('cp-github').value = info.github || 'https://github.com/Febiri';
+        document.getElementById('cp-repos').value = (info.featured_repos || []).join(', ') || 'neuro-symbolic-rag, ClawBio-Pipeline, febPhD';
+
+        document.getElementById('cp-target-title').value = packet.opportunity_title || oppTitle;
+        document.getElementById('cp-target-award').value = packet.requested_award || '$50,000 / Travel Grant';
+
+        const dossier = packet.dossier || {};
+        document.getElementById('cp-sop').value = dossier.statement_of_purpose || dossier.cover_letter || 'Drafting personal statement...';
+        document.getElementById('cp-alignment').value = dossier.research_justification || dossier.project_alignment_pitch || 'Research justification...';
+
+        // Reveal the Check & Proceed drawer
+        document.getElementById('check-proceed-container').classList.remove('hidden');
+        renderApplicationDossier(dossier, currentApplyMode);
+        document.getElementById('check-proceed-container').scrollIntoView({ behavior: 'smooth' });
       } catch (err) {
-        console.warn('Application generation failed:', err);
+        console.warn('Preparation failed:', err);
+        alert('Failed to prepare application packet. Check backend connection.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<span>⚡ Apply on My Behalf & Draft Dossier</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+        btn.innerHTML = `<span>⚡ Autonomous Pre-Fill & Review ("Check & Proceed")</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
       }
     }
 
+    // Mark's Click on "Proceed" executes direct dispatch
+    async function executeProceedDispatch() {
+      if (!latestPacket) {
+        alert('No prepared application packet found. Please click Pre-Fill first.');
+        return;
+      }
+
+      // Collect any manual edits Mark made during "Check"
+      latestPacket.applicant_info.name = document.getElementById('cp-name').value;
+      latestPacket.applicant_info.email = document.getElementById('cp-email').value;
+      latestPacket.applicant_info.phone = document.getElementById('cp-phone').value;
+      latestPacket.applicant_info.affiliation = document.getElementById('cp-org').value;
+      latestPacket.opportunity_title = document.getElementById('cp-target-title').value;
+      if (latestPacket.dossier) {
+        latestPacket.dossier.statement_of_purpose = document.getElementById('cp-sop').value;
+        latestPacket.dossier.research_justification = document.getElementById('cp-alignment').value;
+      }
+
+      const proceedBtn = document.getElementById('proceed-dispatch-btn');
+      proceedBtn.disabled = true;
+      proceedBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Executing Proceed: Dispatching to GitHub & Logging...`;
+
+      try {
+        const res = await fetch('/api/twin/dispatch-application', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            packet: latestPacket,
+            target_repo: document.getElementById('gh-repo-input')?.value || 'febPhD'
+          })
+        });
+        const result = await res.json();
+        
+        // Show Dispatch Receipt Modal
+        const gh = result.github_dispatch || {};
+        document.getElementById('receipt-opp-title').textContent = latestPacket.opportunity_title;
+        const ghLinkEl = document.getElementById('receipt-github-link');
+        const directIssueBtn = document.getElementById('receipt-direct-issue-btn');
+
+        if (gh.issue_url) {
+          ghLinkEl.textContent = gh.issue_url;
+          directIssueBtn.href = gh.issue_url;
+        } else if (gh.target_repo) {
+          ghLinkEl.textContent = `github.com/${gh.target_repo}`;
+          directIssueBtn.href = `https://github.com/${gh.target_repo}/issues`;
+        }
+
+        document.getElementById('dispatch-receipt-modal').classList.remove('hidden');
+        loadDispatchHistory();
+      } catch (err) {
+        console.warn('Dispatch failed:', err);
+        alert('Dispatch error. Please check server logs.');
+      } finally {
+        proceedBtn.disabled = false;
+        proceedBtn.innerHTML = `<span>✅ Check & Proceed (Dispatch Application)</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+    }
+
+    function closeDispatchReceiptModal() {
+      document.getElementById('dispatch-receipt-modal').classList.add('hidden');
+    }
+
+    function copyBookmarkletScript(btn) {
+      if (!latestPacket) {
+        alert('Please prepare an application packet first.');
+        return;
+      }
+      const script = latestPacket.form_autofill_script || (
+        "javascript:(function(){" +
+        "function s(sel,val){var el=document.querySelector(sel);if(el){el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}" +
+        "s('input[name*=\"name\" i], input[id*=\"name\" i]', 'Mark Febiri');" +
+        "s('input[name*=\"email\" i], input[id*=\"email\" i]', 'Febirimark27@gmail.com');" +
+        "s('input[name*=\"github\" i], input[id*=\"github\" i]', 'https://github.com/Febiri');" +
+        "s('input[name*=\"website\" i], input[id*=\"website\" i]', 'https://febmac.vercel.app/');" +
+        "alert('Mark Febiri application data injected successfully!');" +
+        "})();"
+      );
+      navigator.clipboard.writeText(script).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied Script!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    function copyCheckProceedJson(btn) {
+      if (!latestPacket) return;
+      navigator.clipboard.writeText(JSON.stringify(latestPacket, null, 2)).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied JSON!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    async function loadDispatchHistory() {
+      const container = document.getElementById('dispatch-history-list');
+      if (!container) return;
+      container.innerHTML = `<div class="py-8 text-center text-slate-400 font-mono text-xs">Loading dispatch history...</div>`;
+      try {
+        const res = await fetch('/api/twin/dispatch-history');
+        const data = await res.json();
+        const history = data.history || [];
+
+        if (history.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 rounded-3xl bg-white border border-slate-200 text-center space-y-2">
+              <span class="text-3xl">📭</span>
+              <h4 class="font-bold text-slate-800 text-sm">No Dispatched Applications Yet</h4>
+              <p class="text-xs text-slate-500">When you prepare an application and click "Check & Proceed", your dispatched logs and GitHub tracking issues will appear here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = history.map(item => `
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-mono text-[10px] font-bold border border-emerald-200">
+                  ${item.status || 'Dispatched'}
+                </span>
+                <span class="text-[11px] text-slate-400 font-mono">${new Date(item.dispatched_at).toLocaleString()}</span>
+              </div>
+              <h4 class="text-base font-bold text-slate-900">${item.title}</h4>
+              <p class="text-xs text-slate-500">${item.organization || 'Selection Committee'} • Applicant: ${item.applicant || 'Mark Febiri'}</p>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <a 
+                href="${item.github_log?.issue_url || ('https://github.com/' + (item.github_log?.target_repo || 'Febiri/febPhD') + '/issues')}"
+                target="_blank"
+                class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-brand-600 text-white font-bold text-xs transition flex items-center gap-1.5"
+              >
+                <span>🐙 GitHub Tracking ↗</span>
+              </a>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="text-rose-500 text-xs">Failed to load dispatch history.</div>`;
+      }
+    }
+
+    // ================= DOSSIER DISPLAY & CHAT =================
     function renderApplicationDossier(data, mode) {
       latestDossier = data;
       document.getElementById('app-results-container').classList.remove('hidden');
@@ -605,12 +1205,11 @@
         const qa = (data.interview_prep_qa || []).map(q => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n');
         document.getElementById('app-card4-text').textContent = qa;
       }
-
-      document.getElementById('app-results-container').scrollIntoView({ behavior: 'smooth' });
     }
 
     function copyElementText(id, btn) {
-      const text = document.getElementById(id).textContent;
+      const el = document.getElementById(id);
+      const text = el.value || el.textContent;
       navigator.clipboard.writeText(text).then(() => {
         const orig = btn.innerHTML;
         btn.innerHTML = '✅ Copied!';
@@ -640,6 +1239,23 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    async function syncPortfolio() {
+      const btn = document.getElementById('sync-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ Crawling febmac.vercel.app...</span>`;
+      try {
+        const res = await fetch('/api/twin/sync', { method: 'POST' });
+        const data = await res.json();
+        alert('Digital Twin brain successfully re-synced with https://febmac.vercel.app/!');
+        loadBrainProfile();
+      } catch (err) {
+        console.warn('Sync failed:', err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🔄 Re-Sync</span>`;
+      }
     }
 
     async function loadStrategicSuggestions() {
@@ -675,7 +1291,7 @@
     function prefillApply(title) {
       switchTab('apply');
       document.getElementById('target-opp-title').value = title;
-      generateAutonomousApplication();
+      prepareAndReviewApplication();
     }
 
     async function loadBrainProfile() {
@@ -766,23 +1382,25 @@
     // Init
     window.addEventListener('DOMContentLoaded', () => {
       populatePresets();
+      checkGitHubStatus();
       loadBrainProfile();
 
       const params = new URLSearchParams(window.location.search);
       const applyMode = params.get('apply_mode');
       const title = params.get('title');
       const org = params.get('org');
+      const award = params.get('award') || params.get('location');
       const autogen = params.get('autogen');
 
-      if (applyMode && title) {
-        switchStudioTab('apply');
-        switchApplyMode(applyMode);
-        document.getElementById('preset-select').value = 'custom';
-        document.getElementById('custom-fields').classList.remove('hidden');
-        document.getElementById('custom-target-title').value = title;
-        document.getElementById('custom-target-org').value = org || '';
+      if (applyMode) {
+        setApplyMode(applyMode);
+      }
+
+      if (title) {
+        switchTab('apply');
+        document.getElementById('target-opp-title').value = title;
         if (autogen === 'true') {
-          setTimeout(() => generateApplication(), 400);
+          setTimeout(() => prepareAndReviewApplication(), 300);
         }
       }
     });

@@ -45,10 +45,11 @@ try:
         FundingScoutService, IndustryLabService
     )
     try:
-        from backend.twin_agent import TwinAgentService, PortfolioSyncService
+        from backend.twin_agent import TwinAgentService, PortfolioSyncService, GitHubConnectorService
     except Exception as _e:
         TwinAgentService = None
         PortfolioSyncService = None
+        GitHubConnectorService = None
 except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
@@ -67,10 +68,11 @@ except ImportError:
         FundingScoutService, IndustryLabService
     )
     try:
-        from twin_agent import TwinAgentService, PortfolioSyncService
+        from twin_agent import TwinAgentService, PortfolioSyncService, GitHubConnectorService
     except Exception as _e:
         TwinAgentService = None
         PortfolioSyncService = None
+        GitHubConnectorService = None
 
 logger = logging.getLogger("api")
 
@@ -188,6 +190,22 @@ class TwinApplyLabRequest(BaseModel):
 class TwinChatRequest(BaseModel):
     message: str
     history: Optional[List[Dict[str, str]]] = []
+
+
+class GitHubConnectRequest(BaseModel):
+    token: str
+    username: Optional[str] = "Febiri"
+
+
+class PrepareApplicationRequest(BaseModel):
+    opportunity_type: str = "grant"  # "grant" or "lab"
+    title: str
+    details: Optional[Dict[str, Any]] = {}
+
+
+class DispatchApplicationRequest(BaseModel):
+    packet: Dict[str, Any]
+    target_repo: Optional[str] = "febPhD"
 
 
 class PaperChatRequest(BaseModel):
@@ -1315,6 +1333,72 @@ def chat_with_twin(payload: TwinChatRequest):
     service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
     response_text = service.chat_with_twin(user_message=payload.message, chat_history=payload.history or [])
     return {"reply": response_text}
+
+
+@app.get("/api/twin/github/status")
+def get_twin_github_status():
+    """Returns the live connection status of Mark Febiri's GitHub account."""
+    if not GitHubConnectorService:
+        raise HTTPException(status_code=503, detail="GitHubConnectorService unavailable")
+    connector = GitHubConnectorService()
+    return connector.get_status()
+
+
+@app.post("/api/twin/github/connect")
+def connect_twin_github(payload: GitHubConnectRequest):
+    """Saves GitHub Personal Access Token and verifies credentials against GitHub API."""
+    if not GitHubConnectorService:
+        raise HTTPException(status_code=503, detail="GitHubConnectorService unavailable")
+    connector = GitHubConnectorService()
+    result = connector.save_token(token=payload.token, username=payload.username or "Febiri")
+    return result
+
+
+@app.get("/api/twin/github/repos")
+def get_twin_github_repos():
+    """Fetches Mark Febiri's active repositories directly from GitHub API."""
+    if not GitHubConnectorService:
+        raise HTTPException(status_code=503, detail="GitHubConnectorService unavailable")
+    connector = GitHubConnectorService()
+    repos = connector.fetch_live_repositories()
+    return {"repos": repos, "total": len(repos)}
+
+
+@app.post("/api/twin/prepare-application")
+def twin_prepare_application(payload: PrepareApplicationRequest):
+    """Pre-fills and packages an application dossier for human-in-the-loop 'Check & Proceed'."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    packet = service.prepare_application_packet(
+        opportunity_type=payload.opportunity_type,
+        title=payload.title,
+        details=payload.details or {}
+    )
+    return packet
+
+
+@app.post("/api/twin/dispatch-application")
+def twin_dispatch_application(payload: DispatchApplicationRequest):
+    """Executes dispatch upon human 'Proceed' approval: creates GitHub issue/log and records dispatch."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    result = service.dispatch_application(
+        packet=payload.packet,
+        target_repo=payload.target_repo or "febPhD"
+    )
+    return result
+
+
+@app.get("/api/twin/dispatch-history")
+def get_twin_dispatch_history():
+    """Returns audit log of all autonomous applications prepared and dispatched."""
+    if not TwinAgentService:
+        raise HTTPException(status_code=503, detail="TwinAgentService unavailable")
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    history = service.get_dispatch_history()
+    return {"history": history, "total": len(history)}
 
 
 @app.get("/api/health")

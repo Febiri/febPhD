@@ -68,6 +68,10 @@ ZOTERO_LIBRARY_TYPE = os.getenv("ZOTERO_LIBRARY_TYPE", "user")
 # Text-to-Speech Configuration (edge-tts voices)
 DEFAULT_TTS_VOICE = os.getenv("DEFAULT_TTS_VOICE", "en-NG-AbeoNeural")
 
+# GitHub Personal Access Token (PAT) for Autonomous Digital Twin Execution
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
+GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "Febiri").strip()
+
 AVAILABLE_VOICES = [
     {"id": "en-NG-AbeoNeural", "name": "🇬🇭 Abeo (West Africa / Ghana - Male, Expressive & Natural)", "gender": "Male", "region": "Africa"},
     {"id": "en-NG-EzinneNeural", "name": "🇬🇭 Ezinne (West Africa / Ghana - Female, Melodic & Clear)", "gender": "Female", "region": "Africa"},

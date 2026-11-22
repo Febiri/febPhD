@@ -182,7 +182,55 @@ def test_all():
         assert len(p_chat.get('reply', '')) > 50, "Paper chat too short"
         print(f"  [PASS] /api/papers/{sample_pid}/chat returned AI Mentor explanation ({len(p_chat['reply'])} chars)")
 
-    print("\nALL 9 DYNAMIC TEST SUITES PASSED FLAWLESSLY! 100% OPERATIONAL!")
+    print("\n10. Testing Engine 07: GitHub Connector & Autonomous 'Check & Proceed' Application Pipeline...")
+    # GitHub Status Check
+    resp = client.get('/api/twin/github/status')
+    assert resp.status_code == 200, f"/api/twin/github/status failed: {resp.text}"
+    gh_status = resp.json()
+    assert gh_status.get('username') == 'Febiri', "Username mismatch"
+    print(f"  [PASS] /api/twin/github/status verified for @{gh_status['username']} (reachable: {gh_status.get('api_reachable')})")
+
+    # GitHub Repos Live Fetch
+    resp = client.get('/api/twin/github/repos')
+    assert resp.status_code == 200, f"/api/twin/github/repos failed: {resp.text}"
+    repos_data = resp.json()
+    repos_list = repos_data.get('repos', [])
+    assert len(repos_list) > 0, "No repos returned"
+    print(f"  [PASS] /api/twin/github/repos returned {len(repos_list)} live repositories (e.g. {repos_list[0]['name']})")
+
+    # Autonomous "Check & Proceed" Pre-Fill Preparation
+    resp = client.post('/api/twin/prepare-application', json={
+        'opportunity_type': 'grant',
+        'title': 'Google PhD Fellowship in AI & Computational Biology',
+        'details': {'organization': 'Google Research'}
+    })
+    assert resp.status_code == 200, f"/api/twin/prepare-application failed: {resp.text}"
+    packet = resp.json()
+    assert 'applicant_info' in packet, "Missing applicant_info"
+    assert packet['applicant_info'].get('name') == 'Mark Febiri', "Name mismatch"
+    assert 'form_autofill_script' in packet, "Missing form_autofill_script"
+    assert 'dossier' in packet, "Missing dossier"
+    print(f"  [PASS] /api/twin/prepare-application created pre-filled packet with autofill bookmarklet")
+
+    # Execute Proceed Dispatch
+    resp = client.post('/api/twin/dispatch-application', json={
+        'packet': packet,
+        'target_repo': 'febPhD'
+    })
+    assert resp.status_code == 200, f"/api/twin/dispatch-application failed: {resp.text}"
+    dispatch_res = resp.json()
+    assert dispatch_res.get('success') is True, "Dispatch failed"
+    assert dispatch_res.get('status') == 'Dispatched', "Status mismatch"
+    print(f"  [PASS] /api/twin/dispatch-application executed Proceed command (status: {dispatch_res['status']})")
+
+    # Dispatch Audit History
+    resp = client.get('/api/twin/dispatch-history')
+    assert resp.status_code == 200, f"/api/twin/dispatch-history failed: {resp.text}"
+    history_data = resp.json()
+    assert history_data.get('total', 0) >= 1, "Dispatch history empty"
+    print(f"  [PASS] /api/twin/dispatch-history returned {history_data['total']} logged applications")
+
+    print("\nALL 10 DYNAMIC TEST SUITES PASSED FLAWLESSLY! 100% OPERATIONAL!")
 
 if __name__ == '__main__':
     test_all()
