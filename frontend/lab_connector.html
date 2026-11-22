@@ -19,6 +19,9 @@
             indigo: {
               50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 400: '#818cf8',
               500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3'
+            },
+            sky: {
+              50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7'
             }
           },
           fontFamily: {
@@ -42,10 +45,10 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="font-extrabold text-base tracking-tight text-slate-900">Industry Lab & Summit Connector</span>
+              <span class="font-extrabold text-base tracking-tight text-slate-900">Tech Summit & Lab Connector</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">Engine 06</span>
             </div>
-            <p class="text-[11px] text-slate-500">Research Scientist Internships & Global Tech Expos</p>
+            <p class="text-[11px] text-slate-500">Matched by Your Research Field & Preferred Location</p>
           </div>
         </a>
       </div>
@@ -65,48 +68,100 @@
     
     <!-- Hero Banner -->
     <div class="text-center max-w-3xl mx-auto mb-10">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-800 mb-4">
-        <span>🌐 Career Impact & Industry Leadership</span>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700 mb-4">
+        <span>🚀 Fast-Track Post-PhD Career</span>
         <span>•</span>
         <span>Google DeepMind • FAIR • MSR</span>
       </div>
       <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-        Connect Your PhD Research with <br class="hidden sm:inline" />
-        <span class="bg-gradient-to-r from-indigo-600 to-sky-600 bg-clip-text text-transparent">World-Leading Tech Labs</span>.
+        You Know Your Research & Preferred Location. <br class="hidden sm:inline" />
+        <span class="bg-gradient-to-r from-indigo-600 to-sky-600 bg-clip-text text-transparent">We Match the Labs & Summits</span>.
       </h1>
       <p class="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
-        Fast-track your post-PhD career. Track application cycles for Research Scientist Internships at Google DeepMind, Meta FAIR, and Microsoft Research, alongside global tech expos like Google I/O and AWS re:Invent.
+        Don't worry about knowing every lab division. Tell us what research problem you're solving and where in the world you want to be. We match paid Research Scientist Internships ($8k-$12k/mo) and flagship tech expos.
       </p>
     </div>
 
-    <!-- Search & Filter Controls -->
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-8 mb-8">
-      <div class="flex flex-col sm:flex-row gap-4 mb-5">
-        <div class="flex-1 relative">
-          <input 
-            type="text" 
-            id="lab-search"
-            placeholder="Search by lab name, company, or keyword (e.g. DeepMind, FAIR, Google I/O, Systems, AI)..."
-            oninput="filterLabs()"
-            class="w-full px-4 py-3 pl-10 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
-          >
-          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <!-- Intelligent Lab & Summit Matcher Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-8 mb-8 space-y-5">
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Field 1: What research work are you doing? -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            1. What Research Work Are You Doing?
+          </label>
+          <div class="relative">
+            <input 
+              type="text" 
+              id="lab-work"
+              placeholder="e.g. Large Language Models, Edge Computing, Reinforcement Learning, Robotics..."
+              oninput="filterLabs()"
+              class="w-full px-4 py-3 pl-10 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+            >
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
         </div>
-        <button 
-          type="button" 
-          onclick="searchLiveLabs()"
-          class="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0"
-        >
-          <span>Live AI Lab Scout</span>
+
+        <!-- Field 2: Where do you want to go? -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            2. Where Do You Want To Go?
+          </label>
+          <select 
+            id="lab-location" 
+            onchange="filterLabs()"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium bg-white"
+          >
+            <option value="All">All Locations / Global (Anywhere)</option>
+            <option value="United States (Silicon Valley, Seattle, NY, Boston)">United States (Silicon Valley, Seattle, NY)</option>
+            <option value="United Kingdom & Europe (London, Cambridge, Paris, Zurich)">Europe (London, Cambridge, Paris, Zurich)</option>
+            <option value="Asia (Singapore, Tokyo, Bangalore)">Asia (Singapore, Tokyo, Bangalore)</option>
+            <option value="Africa (Accra, Nairobi, Johannesburg)">Africa (Accra, Nairobi, Johannesburg)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Quick Research Topic Chips -->
+      <div class="flex items-center gap-2 flex-wrap pt-1">
+        <span class="text-xs font-semibold text-slate-400">Quick Fields:</span>
+        <button type="button" onclick="setLabWork('Generative AI & LLMs')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+          Generative AI & LLMs
+        </button>
+        <button type="button" onclick="setLabWork('Robotics & Embodied AI')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+          Robotics & Embodied AI
+        </button>
+        <button type="button" onclick="setLabWork('Edge Silicon & Systems')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+          Edge Silicon & Systems
+        </button>
+        <button type="button" onclick="setLabWork('Computer Vision')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+          Computer Vision
+        </button>
+        <button type="button" onclick="setLabWork('Cloud & Distributed Systems')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition">
+          Cloud & Distributed
         </button>
       </div>
 
-      <!-- Type Filter Chips -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-1" id="type-chips">
-        <button onclick="setType('All')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm" data-type="All">All Opportunities</button>
-        <button onclick="setType('Research Lab Internship')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Research Lab Internship">Research Scientist Internships</button>
-        <button onclick="setType('Global Tech Summit')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Global Tech Summit">Global Tech Summits</button>
+      <!-- Type Filter Chips & Action Button -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-100">
+        <div class="flex items-center gap-2 overflow-x-auto pb-1" id="type-chips">
+          <button onclick="setType('All')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm" data-type="All">All Opportunities</button>
+          <button onclick="setType('Research Lab Internship')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Research Lab Internship">💼 Research Internships ($8k-$12k/mo)</button>
+          <button onclick="setType('Global Tech Summit')" class="type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition" data-type="Global Tech Summit">🌐 Global Tech Summits & Expos</button>
+        </div>
+
+        <button 
+          type="button" 
+          id="match-labs-btn"
+          onclick="searchLiveLabs()"
+          class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-semibold text-xs shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition active:scale-95 shrink-0"
+        >
+          <span>🚀 Match Labs With Live AI Scout</span>
+        </button>
       </div>
+
     </div>
 
     <!-- Results Grid -->
@@ -225,6 +280,11 @@
       }
     ];
 
+    function setLabWork(field) {
+      document.getElementById('lab-work').value = field;
+      filterLabs();
+    }
+
     async function loadLabs() {
       try {
         const res = await fetch('/api/labs/search');
@@ -233,13 +293,13 @@
       } catch (err) {
         allLabs = MASTER_LOCAL_LABS;
       }
-      renderLabs();
+      filterLabs();
     }
 
-    function setType(t) {
-      activeType = t;
+    function setType(type) {
+      activeType = type;
       document.querySelectorAll('.type-btn').forEach(btn => {
-        if (btn.dataset.type === t) {
+        if (btn.dataset.type === type) {
           btn.className = 'type-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm';
         } else {
           btn.className = 'type-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition';
@@ -249,15 +309,37 @@
     }
 
     function filterLabs() {
-      const q = document.getElementById('lab-search').value.trim().toLowerCase();
-      const filtered = allLabs.filter(it => {
-        if (activeType !== 'All' && it.type !== activeType) return false;
-        if (q) {
-          const searchable = `${it.name} ${it.organization} ${it.description} ${(it.tags || []).join(' ')}`.toLowerCase();
-          if (!searchable.includes(q)) return false;
+      const work = document.getElementById('lab-work').value.trim().toLowerCase();
+      const loc = document.getElementById('lab-location').value;
+
+      const filtered = allLabs.filter(item => {
+        // 1. Type check
+        if (activeType !== 'All' && item.type !== activeType) return false;
+
+        // 2. Location check
+        if (loc !== 'All') {
+          const locLower = loc.toLowerCase();
+          const labLoc = `${item.location || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+          const isGlobal = labLoc.includes('global') || labLoc.includes('remote') || labLoc.includes('hybrid');
+          if (!isGlobal && !labLoc.includes(locLower)) {
+            if (locLower.includes('united states') && !['usa', 'ca', 'wa', 'ny', 'ma', 'nevada', 'seattle', 'mountain view', 'redmond', 'menlo park'].some(k => labLoc.includes(k))) return false;
+            if (locLower.includes('europe') && !['europe', 'uk', 'london', 'cambridge', 'paris', 'zurich', 'berlin'].some(k => labLoc.includes(k))) return false;
+            if (locLower.includes('asia') && !['asia', 'singapore', 'tokyo', 'bangalore', 'india'].some(k => labLoc.includes(k))) return false;
+            if (locLower.includes('africa') && !['africa', 'accra', 'nairobi'].some(k => labLoc.includes(k))) return false;
+          }
         }
+
+        // 3. Work check
+        if (work) {
+          const searchable = `${item.name} ${item.organization} ${item.target_profile || ''} ${item.description} ${(item.tags || []).join(' ')}`.toLowerCase();
+          const words = work.split(/\s+/).filter(w => w.length > 2);
+          const hasMatch = words.some(w => searchable.includes(w)) || searchable.includes('machine learning') || searchable.includes('computer science') || searchable.includes('systems') || searchable.includes('artificial intelligence');
+          if (!hasMatch) return false;
+        }
+
         return true;
       });
+
       renderLabs(filtered);
     }
 
@@ -267,82 +349,96 @@
         grid.innerHTML = `
           <div class="col-span-full py-12 text-center text-slate-500">
             <span class="text-3xl block mb-2">🔍</span>
-            <p class="font-medium text-sm">No research labs or summits matched your criteria.</p>
-            <button onclick="setType('All'); document.getElementById('lab-search').value='';" class="mt-3 text-xs text-indigo-600 font-semibold hover:underline">Reset Filters</button>
+            <p class="font-medium text-sm">No labs or summits matched your research field and location.</p>
+            <button onclick="document.getElementById('lab-work').value=''; document.getElementById('lab-location').value='All'; setType('All');" class="mt-3 text-xs text-indigo-600 font-semibold hover:underline">Reset Filters</button>
           </div>
         `;
         return;
       }
 
-      grid.innerHTML = list.map(it => `
+      grid.innerHTML = list.map(item => {
+        const matchBadge = item.match_reason ? `
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[10px] font-mono font-bold mb-2">
+            🎯 ${item.match_reason}
+          </div>
+        ` : '';
+
+        return `
         <div class="rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition-all p-6 sm:p-7 flex flex-col justify-between group">
           <div>
+            ${matchBadge}
             <div class="flex items-start justify-between gap-3 mb-3">
-              <span class="text-[11px] font-mono uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                ${it.type}
+              <span class="text-[11px] font-mono uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                ${item.type}
               </span>
-              <span class="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200 shrink-0">
-                ${it.location}
+              <span class="text-[11px] font-mono font-medium text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                📍 ${item.location}
               </span>
             </div>
 
-            <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition">
-              ${it.name}
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition">
+              ${item.name}
             </h3>
             <span class="text-xs font-semibold text-slate-500 block mt-0.5 mb-3">
-              ${it.organization}
+              ${item.organization}
             </span>
 
             <p class="text-xs text-slate-600 leading-relaxed mb-4">
-              ${it.description}
+              ${item.description}
             </p>
 
-            <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-4">
+            <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 mb-4">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-700 shrink-0">📅 Cycle:</span>
-                <span class="font-medium text-slate-600">${it.cycle}</span>
+                <span class="font-bold text-slate-700 shrink-0">⏳ Cycle:</span>
+                <span class="font-medium text-slate-600">${item.cycle}</span>
               </div>
-              <div class="flex items-start gap-2">
-                <span class="font-bold text-slate-700 shrink-0">💼 Compensation:</span>
-                <span class="text-slate-600 font-medium">${it.compensation}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 shrink-0">💎 Support:</span>
+                <span class="text-indigo-700 font-semibold">${item.compensation}</span>
               </div>
-              <div class="flex items-start gap-2">
-                <span class="font-bold text-slate-700 shrink-0">🎯 Target:</span>
-                <span class="text-slate-600">${it.target_profile}</span>
+              <div class="flex items-start gap-2 pt-0.5">
+                <span class="font-bold text-slate-700 shrink-0">🎯 Ideal Profile:</span>
+                <span class="text-slate-600">${item.target_profile}</span>
               </div>
             </div>
 
             <div class="flex items-center gap-1.5 flex-wrap mb-5">
-              ${(it.tags || []).map(t => `<span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${t}</span>`).join('')}
+              ${(item.tags || []).map(t => `<span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">${t}</span>`).join('')}
             </div>
           </div>
 
           <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs text-slate-400">Careers / Event Portal</span>
+            <span class="text-xs text-slate-400">Official Portal</span>
             <a 
-              href="${it.url}" 
+              href="${item.url}" 
               target="_blank" 
               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-semibold transition"
             >
-              <span>Explore Portal</span>
+              <span>View Portal</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     async function searchLiveLabs() {
-      const q = document.getElementById('lab-search').value.trim();
-      if (!q) {
-        loadLabs();
-        return;
-      }
+      const work = document.getElementById('lab-work').value.trim();
+      const loc = document.getElementById('lab-location').value;
+      const btn = document.getElementById('match-labs-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Matching Live Opportunities...`;
+
       try {
         const res = await fetch('/api/labs/search', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ query: q, item_type: activeType })
+          body: JSON.stringify({ 
+            research_work: work, 
+            location: loc, 
+            item_type: activeType 
+          })
         });
         const data = await res.json();
         if (data && data.length) {
@@ -350,16 +446,19 @@
           renderLabs(allLabs);
         }
       } catch (err) {
-        console.warn('Live scout error, filtering local:', err);
+        console.warn('Live lab scout error, filtering local:', err);
         filterLabs();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🚀 Match Labs With Live AI Scout</span>`;
       }
     }
 
-    // Render local master labs immediately for instant zero-flicker display
+    // Render local master items immediately
     allLabs = [...MASTER_LOCAL_LABS];
-    renderLabs(allLabs);
+    filterLabs();
 
-    // Then asynchronously refresh from API
+    // Refresh from API
     loadLabs();
   </script>
 

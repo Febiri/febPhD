@@ -144,11 +144,15 @@ class ReviewerRequest(BaseModel):
 
 class FundingSearchRequest(BaseModel):
     query: Optional[str] = ""
+    research_work: Optional[str] = ""
+    destination: Optional[str] = "All"
     category: Optional[str] = "All"
 
 
 class LabSearchRequest(BaseModel):
     query: Optional[str] = ""
+    research_work: Optional[str] = ""
+    location: Optional[str] = "All"
     item_type: Optional[str] = "All"
 
 
@@ -1083,34 +1087,64 @@ async def upload_pdf_for_reviewer(
 # ENGINE 5: FELLOWSHIP, TRAVEL GRANT & FUNDING RADAR ENDPOINTS
 # =====================================================================
 @app.get("/api/grants/search")
-def get_grants(query: Optional[str] = "", category: Optional[str] = "All"):
-    """Returns doctoral fellowships and student conference travel grants."""
+def get_grants(
+    query: Optional[str] = "",
+    research_work: Optional[str] = "",
+    destination: Optional[str] = "All",
+    category: Optional[str] = "All"
+):
+    """Returns doctoral fellowships and student conference travel grants matched by topic and destination."""
     service = FundingScoutService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
-    return service.search_funding(query=query or "", category=category or "All")
+    return service.search_funding(
+        query=query or "",
+        research_work=research_work or "",
+        destination=destination or "All",
+        category=category or "All"
+    )
 
 
 @app.post("/api/grants/search")
 def post_grants(payload: FundingSearchRequest):
     """Searches doctoral fellowships and travel grants with live AI expansion."""
     service = FundingScoutService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
-    return service.search_funding(query=payload.query or "", category=payload.category or "All")
+    return service.search_funding(
+        query=payload.query or "",
+        research_work=payload.research_work or "",
+        destination=payload.destination or "All",
+        category=payload.category or "All"
+    )
 
 
 # =====================================================================
 # ENGINE 6: TECH SUMMIT & INDUSTRY LAB CONNECTOR ENDPOINTS
 # =====================================================================
 @app.get("/api/labs/search")
-def get_labs(query: Optional[str] = "", item_type: Optional[str] = "All"):
-    """Returns research scientist internships and global tech expos."""
+def get_labs(
+    query: Optional[str] = "",
+    research_work: Optional[str] = "",
+    location: Optional[str] = "All",
+    item_type: Optional[str] = "All"
+):
+    """Returns research scientist internships and global tech expos matched by field and preferred location."""
     service = IndustryLabService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
-    return service.search_labs(query=query or "", item_type=item_type or "All")
+    return service.search_labs(
+        query=query or "",
+        research_work=research_work or "",
+        location=location or "All",
+        item_type=item_type or "All"
+    )
 
 
 @app.post("/api/labs/search")
 def post_labs(payload: LabSearchRequest):
     """Searches research scientist internships and tech summits with live AI expansion."""
     service = IndustryLabService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
-    return service.search_labs(query=payload.query or "", item_type=payload.item_type or "All")
+    return service.search_labs(
+        query=payload.query or "",
+        research_work=payload.research_work or "",
+        location=payload.location or "All",
+        item_type=payload.item_type or "All"
+    )
 
 
 @app.get("/api/health")

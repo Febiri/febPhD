@@ -281,7 +281,6 @@ Provide an in-depth peer review and copy-paste publication suggestions formatted
                 try:
                     parsed = json.loads(text, strict=False)
                 except Exception:
-                    # Clean potential unescaped multi-line draft property
                     clean_json = re.sub(r'("revised_document_draft":\s*").*?("(\s*,\s*"|\s*}))', r'\1\2', text, flags=re.DOTALL)
                     try:
                         parsed = json.loads(clean_json, strict=False)
@@ -289,9 +288,9 @@ Provide an in-depth peer review and copy-paste publication suggestions formatted
                         pass
                 if isinstance(parsed, dict) and "overall_score" in parsed:
                     if "copy_paste_suggestions" not in parsed:
-                        parsed["copy_paste_suggestions"] = self._build_default_copy_paste_suggestions(title, full_text[:1200], venue)
+                        parsed["copy_paste_suggestions"] = self._build_default_copy_paste_suggestions(title, abstract[:1200], venue)
                     if "revised_document_draft" not in parsed or not str(parsed["revised_document_draft"]).strip():
-                        parsed["revised_document_draft"] = self._build_default_revised_draft(title, full_text[:1200], venue, parsed["copy_paste_suggestions"])
+                        parsed["revised_document_draft"] = self._build_default_revised_draft(title, abstract[:1200], venue, parsed["copy_paste_suggestions"])
                     return parsed
             except Exception as e:
                 logger.warning(f"Reviewer model {m} failed: {e}")
@@ -707,70 +706,125 @@ class FundingScoutService:
         self.api_key = (api_key or GEMINI_API_KEY or "").strip()
         self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
 
-    def search_funding(self, query: str = "", category: str = "All") -> List[Dict[str, Any]]:
-        """Filters curated master funding awards and expands dynamically using Gemini."""
-        q = (query or "").strip().lower()
+    def search_funding(
+        self,
+        query: str = "",
+        research_work: str = "",
+        destination: str = "All",
+        category: str = "All"
+    ) -> List[Dict[str, Any]]:
+        """Matches curated doctoral fellowships and travel grants by student research topic and destination, expanding with Gemini."""
+        work = (research_work or query or "").strip().lower()
+        dest = (destination or "All").strip()
         cat = (category or "All").strip()
-        
+
         filtered = []
         for g in MASTER_GRANTS:
-            if cat != "All" and g["category"] != cat:
+            # 1. Category filter
+            if cat != "All" and not cat.lower().startswith("all") and g["category"] != cat:
                 continue
-            if q:
-                searchable = f"{g['title']} {g['organization']} {g['description']} {' '.join(g['tags'])}".lower()
-                if q not in searchable:
-                    continue
-            filtered.append(g)
 
-        # If query is specialized, call Gemini to discover additional live grants
-        if q and self.api_key:
+            # 2. Destination filter
+            if dest != "All" and not dest.lower().startswith("all"):
+                dest_lower = dest.lower()
+                dest_text = f"{g.get('destination_scope', '')} {g.get('organization', '')} {g.get('description', '')} {' '.join(g.get('tags', []))}".lower()
+                is_global = "global" in dest_text or "worldwide" in dest_text
+                if not is_global and dest_lower not in dest_text:
+                    if "usa" in dest_lower or "america" in dest_lower:
+                        if not any(k in dest_text for k in ["usa", "us", "america", "california", "redmond", "new york", "massachusetts"]):
+                            continue
+                    elif "europe" in dest_lower or "uk" in dest_lower or "germany" in dest_lower:
+                        if not any(k in dest_text for k in ["europe", "uk", "cambridge", "london", "germany", "zurich", "paris"]):
+                            continue
+                    elif "africa" in dest_lower:
+                        if not any(k in dest_text for k in ["africa", "diaspora", "global"]):
+                            continue
+                    elif "asia" in dest_lower:
+                        if not any(k in dest_text for k in ["asia", "japan", "singapore", "india", "global"]):
+                            continue
+
+            # 3. Research work filter
+            if work:
+                searchable = f"{g['title']} {g['organization']} {g['description']} {g.get('eligibility', '')} {' '.join(g['tags'])}".lower()
+                keywords = [k for k in work.split() if len(k) > 2]
+                matches_keyword = any(k in searchable for k in keywords) or "computer science" in searchable or "phd students" in searchable or "machine learning" in searchable
+                if not matches_keyword:
+                    continue
+
+            # Attach match reason if specific filters were provided
+            item = dict(g)
+            reasons = []
+            if research_work.strip():
+                reasons.append(f"Research: {research_work.strip()}")
+            if dest != "All" and not dest.lower().startswith("all"):
+                reasons.append(f"Destination: {dest}")
+            if reasons:
+                item["match_reason"] = " • ".join(reasons)
+            filtered.append(item)
+
+        # 4. Live AI expansion when research work or specific destination is provided
+        if (work or (dest != "All" and not dest.lower().startswith("all"))) and self.api_key:
             try:
-                ai_grants = self._scout_grants_with_gemini(q)
+                ai_grants = self._scout_grants_with_gemini(research_work=work, destination=dest, category=cat)
                 if ai_grants:
-                    # Merge and deduplicate by title
                     titles = {g["title"].lower() for g in filtered}
                     for ag in ai_grants:
                         if ag.get("title", "").lower() not in titles:
+                            if "match_reason" not in ag:
+                                ag["match_reason"] = f"AI matched for {research_work or 'your research'} in {dest}"
                             filtered.append(ag)
             except Exception as e:
                 logger.warning(f"Gemini live grant scout error: {e}")
 
         return filtered
 
-    def _scout_grants_with_gemini(self, query: str) -> List[Dict[str, Any]]:
+    def _scout_grants_with_gemini(self, research_work: str = "", destination: str = "All", category: str = "All") -> List[Dict[str, Any]]:
         client = genai.Client(api_key=self.api_key)
         today = date.today().strftime("%B %Y")
-        prompt = f"""Search for currently active, real academic PhD fellowships, student travel grants, and doctoral research awards for computer science and engineering related to: '{query}'. Current date: {today}.
-Return strictly a valid JSON array of objects with no markdown:
+        work_desc = research_work or "Computer Science, AI, Systems, and Engineering"
+        dest_desc = destination if destination != "All" else "Global / International (USA, Europe, Asia, Africa)"
+        prompt = f"""Search for currently active, real academic PhD fellowships, student conference travel grants, and doctoral research awards.
+STUDENT RESEARCH WORK / TOPIC: {work_desc}
+TARGET DESTINATION / WHERE THEY WANT TO GO: {dest_desc}
+FUNDING CATEGORY: {category}
+Current date: {today}.
+
+Return strictly a valid JSON array of objects with no markdown fences:
 [
   {{
     "id": "unique-id",
     "title": "Official Grant/Fellowship Name",
     "category": "Prestigious Fellowship" or "Conference Travel Grant" or "Diversity & Global Grant",
-    "organization": "Sponsoring Foundation / Company",
-    "award": "Specific monetary amount (e.g. $40,000 stipend or $2,000 flight coverage)",
+    "organization": "Sponsoring Foundation / Company / Organization",
+    "award": "Specific monetary amount (e.g. $42,000 annual stipend or $2,500 travel grant)",
     "deadline": "Upcoming deadline or cycle window",
     "eligibility": "Eligibility requirements for PhD students",
-    "description": "2-sentence summary of the grant scope",
+    "description": "2-sentence summary of the grant scope and why it matches this research topic and destination",
     "url": "https://official-portal-url",
-    "tags": ["Tag1", "Tag2"]
+    "tags": ["Tag1", "Tag2"],
+    "match_reason": "Matches your research in {work_desc} for travel to {dest_desc}"
   }}
 ]"""
-        try:
-            resp = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2)
-            )
-            text = (resp.text or "").strip()
-            text = re.sub(r"^```json\s*", "", text)
-            text = re.sub(r"^```\s*", "", text)
-            text = re.sub(r"\s*```$", "", text)
-            parsed = json.loads(text)
-            if isinstance(parsed, list):
-                return parsed
-        except Exception:
-            pass
+        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
+            models.insert(0, self.model)
+        for m in models:
+            try:
+                resp = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2)
+                )
+                text = (resp.text or "").strip()
+                text = re.sub(r"^```json\s*", "", text)
+                text = re.sub(r"^```\s*", "", text)
+                text = re.sub(r"\s*```$", "", text)
+                parsed = json.loads(text, strict=False)
+                if isinstance(parsed, list):
+                    return parsed
+            except Exception as e:
+                logger.warning(f"Gemini grant model {m} failed: {e}")
+                continue
         return []
 
 
@@ -890,67 +944,123 @@ class IndustryLabService:
         self.api_key = (api_key or GEMINI_API_KEY or "").strip()
         self.model = (model or GEMINI_MODEL or "gemini-2.5-flash").strip()
 
-    def search_labs(self, query: str = "", item_type: str = "All") -> List[Dict[str, Any]]:
-        """Filters master industry labs and tech summits with optional dynamic AI discovery."""
-        q = (query or "").strip().lower()
+    def search_labs(
+        self,
+        query: str = "",
+        research_work: str = "",
+        location: str = "All",
+        item_type: str = "All"
+    ) -> List[Dict[str, Any]]:
+        """Matches master industry research labs and tech summits by PhD research field and location, expanding with Gemini."""
+        work = (research_work or query or "").strip().lower()
+        loc = (location or "All").strip()
         t = (item_type or "All").strip()
 
         filtered = []
         for item in MASTER_LABS_AND_SUMMITS:
-            if t != "All" and item["type"] != t:
+            # 1. Type filter
+            if t != "All" and not t.lower().startswith("all") and item["type"] != t:
                 continue
-            if q:
-                searchable = f"{item['name']} {item['organization']} {item['description']} {' '.join(item['tags'])}".lower()
-                if q not in searchable:
-                    continue
-            filtered.append(item)
 
-        if q and self.api_key:
+            # 2. Location filter
+            if loc != "All" and not loc.lower().startswith("all"):
+                loc_lower = loc.lower()
+                loc_text = f"{item['location']} {item.get('description', '')} {' '.join(item.get('tags', []))}".lower()
+                is_global = "global" in loc_text or "remote" in loc_text or "hybrid" in loc_text
+                if not is_global and loc_lower not in loc_text:
+                    if "usa" in loc_lower or "united states" in loc_lower or "silicon valley" in loc_lower or "america" in loc_lower:
+                        if not any(k in loc_text for k in ["ca", "wa", "ny", "ma", "nevada", "usa", "mountain view", "redmond", "menlo park", "seattle"]):
+                            continue
+                    elif "europe" in loc_lower or "uk" in loc_lower or "london" in loc_lower:
+                        if not any(k in loc_text for k in ["uk", "london", "cambridge", "paris", "zurich", "berlin", "europe"]):
+                            continue
+                    elif "asia" in loc_lower:
+                        if not any(k in loc_text for k in ["singapore", "tokyo", "japan", "bangalore", "india", "asia"]):
+                            continue
+                    elif "africa" in loc_lower:
+                        if not any(k in loc_text for k in ["africa", "accra", "nairobi", "global"]):
+                            continue
+
+            # 3. Research work filter
+            if work:
+                searchable = f"{item['name']} {item['organization']} {item['target_profile']} {item['description']} {' '.join(item['tags'])}".lower()
+                keywords = [k for k in work.split() if len(k) > 2]
+                matches_keyword = any(k in searchable for k in keywords) or "machine learning" in searchable or "computer science" in searchable or "systems" in searchable or "artificial intelligence" in searchable
+                if not matches_keyword:
+                    continue
+
+            res_item = dict(item)
+            reasons = []
+            if research_work.strip():
+                reasons.append(f"Field: {research_work.strip()}")
+            if loc != "All" and not loc.lower().startswith("all"):
+                reasons.append(f"Location: {loc}")
+            if reasons:
+                res_item["match_reason"] = " • ".join(reasons)
+            filtered.append(res_item)
+
+        # 4. Live AI expansion when research work or specific location is provided
+        if (work or (loc != "All" and not loc.lower().startswith("all"))) and self.api_key:
             try:
-                ai_items = self._scout_labs_with_gemini(q)
+                ai_items = self._scout_labs_with_gemini(research_work=work, location=loc, item_type=t)
                 if ai_items:
                     names = {it["name"].lower() for it in filtered}
                     for ait in ai_items:
                         if ait.get("name", "").lower() not in names:
+                            if "match_reason" not in ait:
+                                ait["match_reason"] = f"AI matched for {research_work or 'your research'} in {loc}"
                             filtered.append(ait)
             except Exception as e:
                 logger.warning(f"Gemini live lab scout error: {e}")
 
         return filtered
 
-    def _scout_labs_with_gemini(self, query: str) -> List[Dict[str, Any]]:
+    def _scout_labs_with_gemini(self, research_work: str = "", location: str = "All", item_type: str = "All") -> List[Dict[str, Any]]:
         client = genai.Client(api_key=self.api_key)
         today = date.today().strftime("%B %Y")
-        prompt = f"""Search for real, premier industry computer science research lab internships or global tech summits related to: '{query}'. Current date: {today}.
+        work_desc = research_work or "Computer Science, Artificial Intelligence, Robotics, and Systems"
+        loc_desc = location if location != "All" else "Global Locations (USA, Europe, Asia, Africa)"
+        prompt = f"""Search for real, premier industry computer science research lab internships (like Google DeepMind, Meta FAIR, Microsoft Research, Apple ML, Amazon Science, NVIDIA Research) or premier global tech summits/expos.
+STUDENT RESEARCH WORK / FIELD: {work_desc}
+PREFERRED LOCATION / WHERE THEY WANT TO GO: {loc_desc}
+OPPORTUNITY TYPE: {item_type}
+Current date: {today}.
+
 Return strictly a valid JSON array of objects with no markdown:
 [
   {{
     "id": "unique-id",
-    "name": "Official Lab or Summit Name",
+    "name": "Official Internship or Summit Name",
     "type": "Research Lab Internship" or "Global Tech Summit",
     "organization": "Sponsoring Enterprise or Lab",
-    "location": "Global locations or venue city",
-    "cycle": "Application cycle or annual month",
-    "compensation": "Stipend, salary, or travel funding details",
-    "target_profile": "Target PhD profile and research interests",
-    "description": "2-sentence overview of the opportunity",
+    "location": "City, Country, or Global",
+    "cycle": "Application cycle (e.g. Summer 2026, Fall 2026, or Annual Month)",
+    "compensation": "Stipend, salary, housing or travel sponsorship details",
+    "target_profile": "Target PhD candidate background and research interests",
+    "description": "2-sentence overview of the lab team or summit focus and why it matches this PhD topic",
     "url": "https://official-portal-url",
-    "tags": ["Tag1", "Tag2"]
+    "tags": ["Tag1", "Tag2"],
+    "match_reason": "Matches your research in {work_desc} for location {loc_desc}"
   }}
 ]"""
-        try:
-            resp = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2)
-            )
-            text = (resp.text or "").strip()
-            text = re.sub(r"^```json\s*", "", text)
-            text = re.sub(r"^```\s*", "", text)
-            text = re.sub(r"\s*```$", "", text)
-            parsed = json.loads(text)
-            if isinstance(parsed, list):
-                return parsed
-        except Exception:
-            pass
+        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
+            models.insert(0, self.model)
+        for m in models:
+            try:
+                resp = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2)
+                )
+                text = (resp.text or "").strip()
+                text = re.sub(r"^```json\s*", "", text)
+                text = re.sub(r"^```\s*", "", text)
+                text = re.sub(r"\s*```$", "", text)
+                parsed = json.loads(text, strict=False)
+                if isinstance(parsed, list):
+                    return parsed
+            except Exception as e:
+                logger.warning(f"Gemini lab model {m} failed: {e}")
+                continue
         return []
