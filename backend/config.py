@@ -30,20 +30,34 @@ def _check_writable(dir_path: Path) -> bool:
 
 is_writable = _check_writable(BASE_DIR)
 
+import tempfile
+
 if IS_SERVERLESS or not is_writable:
-    # On serverless (Vercel, AWS Lambda) or read-only container, only /tmp is writable
-    TMP_DIR = Path("/tmp")
+    # On serverless (Vercel, AWS Lambda) or read-only container, only /tmp (or system temp) is writable
+    TMP_DIR = Path("/tmp") if (os.name != "nt" or Path("/tmp").exists()) else Path(tempfile.gettempdir())
     AUDIO_DIR = TMP_DIR / "audio"
     PDFS_DIR = TMP_DIR / "pdfs"
-    default_db_path = "/tmp/zotero_audio.db"
+    default_db_file = TMP_DIR / "zotero_audio.db"
     initial_db = BASE_DIR / "zotero_audio.db"
-    if initial_db.exists() and not Path(default_db_path).exists():
+    if initial_db.exists() and not default_db_file.exists():
         try:
             import shutil
-            shutil.copy2(initial_db, default_db_path)
+            # copyfile copies contents without copying read-only permission bits
+            shutil.copyfile(initial_db, default_db_file)
+            try:
+                os.chmod(default_db_file, 0o666)
+            except Exception:
+                pass
         except Exception:
             pass
-    DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{default_db_path}")
+
+    # If DATABASE_URL is set to an external service (PostgreSQL, MySQL, etc.), honor it.
+    # If it is SQLite (or unset or relative ./), force it to writable temp path!
+    raw_db_url = os.getenv("DATABASE_URL", "").strip()
+    if raw_db_url and not raw_db_url.startswith("sqlite"):
+        DATABASE_URL = raw_db_url
+    else:
+        DATABASE_URL = f"sqlite:///{default_db_file.as_posix()}"
 else:
     AUDIO_DIR = STATIC_DIR / "audio"
     PDFS_DIR = STATIC_DIR / "pdfs"

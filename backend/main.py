@@ -1,8 +1,10 @@
 import os
 import sys
+import json
 import shutil
 import asyncio
 import logging
+from datetime import datetime
 from pathlib import Path
 
 # Ensure root and backend directories are in sys.path
@@ -31,7 +33,7 @@ try:
     from backend.config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
         GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable
     )
     from backend.database import init_db, get_db, Paper
     from backend.zotero_sync import ZoteroSyncService
@@ -54,7 +56,7 @@ except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
         GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable
     )
     from database import init_db, get_db, Paper
     from zotero_sync import ZoteroSyncService
@@ -211,6 +213,16 @@ class DispatchApplicationRequest(BaseModel):
 class PaperChatRequest(BaseModel):
     message: str
     history: Optional[List[Dict[str, str]]] = []
+
+
+class PaperNoteRequest(BaseModel):
+    id: Optional[str] = None
+    title: Optional[str] = "Professional Note"
+    content: str
+    quote: Optional[str] = ""
+    category: Optional[str] = "Methodology"
+    color: Optional[str] = "yellow"
+    created_at: Optional[str] = None
 
 
 class ReviewerChatRequest(BaseModel):
@@ -625,6 +637,102 @@ def chat_with_paper_endpoint(paper_id: int, payload: PaperChatRequest, db: Sessi
         history=payload.history or []
     )
     return {"reply": reply, "paper_title": paper.title}
+
+
+def _get_notes_file(paper_id: int) -> Path:
+    import tempfile
+    if IS_SERVERLESS or not is_writable:
+        notes_dir = Path("/tmp/notes") if (os.name != "nt" or Path("/tmp").exists()) else Path(tempfile.gettempdir()) / "zam_notes"
+    else:
+        notes_dir = BASE_DIR / "data" / "notes"
+    try:
+        notes_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    return notes_dir / f"notes_{paper_id}.json"
+
+
+def _load_paper_notes(paper_id: int) -> List[Dict[str, Any]]:
+    f = _get_notes_file(paper_id)
+    if f.exists():
+        try:
+            return json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def _save_paper_notes(paper_id: int, notes: List[Dict[str, Any]]):
+    f = _get_notes_file(paper_id)
+    try:
+        f.write_text(json.dumps(notes, indent=2), encoding="utf-8")
+    except Exception as e:
+        logger.warning(f"Could not persist notes to {f}: {e}")
+
+
+@app.get("/api/papers/{paper_id}/notes")
+def get_paper_notes(paper_id: int):
+    """Retrieve saved highlights and professional notes for a research paper."""
+    notes = _load_paper_notes(paper_id)
+    return {"paper_id": paper_id, "notes": notes, "total": len(notes)}
+
+
+@app.post("/api/papers/{paper_id}/notes")
+def save_paper_note(paper_id: int, payload: PaperNoteRequest):
+    """Save or update a highlighted passage and professional note."""
+    notes = _load_paper_notes(paper_id)
+    note_id = payload.id or f"note_{int(datetime.utcnow().timestamp() * 1000)}"
+    new_note = {
+        "id": note_id,
+        "title": payload.title or "Professional Note",
+        "content": payload.content,
+        "quote": payload.quote or "",
+        "category": payload.category or "Methodology",
+        "color": payload.color or "yellow",
+        "created_at": payload.created_at or datetime.utcnow().isoformat()
+    }
+    existing_idx = next((i for i, n in enumerate(notes) if n.get("id") == note_id), None)
+    if existing_idx is not None:
+        notes[existing_idx] = new_note
+    else:
+        notes.insert(0, new_note)
+    _save_paper_notes(paper_id, notes)
+    return {"success": True, "note": new_note, "total": len(notes)}
+
+
+@app.delete("/api/papers/{paper_id}/notes/{note_id}")
+def delete_paper_note(paper_id: int, note_id: str):
+    """Delete a professional research note."""
+    notes = _load_paper_notes(paper_id)
+    notes = [n for n in notes if n.get("id") != note_id]
+    _save_paper_notes(paper_id, notes)
+    return {"success": True, "deleted_id": note_id, "total": len(notes)}
+
+
+@app.get("/api/papers/{paper_id}/pdf")
+def download_paper_pdf(paper_id: int, db: Session = Depends(get_db)):
+    """Directly download the original paper PDF file to the researcher's computer."""
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper or not paper.pdf_path:
+        raise HTTPException(status_code=404, detail="PDF not attached to this paper")
+
+    pdf_file = Path(paper.pdf_path)
+    if not pdf_file.exists():
+        alt1 = PDFS_DIR / pdf_file.name
+        alt2 = Path("/tmp/pdfs") / pdf_file.name
+        if alt1.exists():
+            pdf_file = alt1
+        elif alt2.exists():
+            pdf_file = alt2
+        else:
+            raise HTTPException(status_code=404, detail="PDF file not found on disk")
+
+    safe_title = "".join(c for c in (paper.title or "research_paper") if c.isalnum() or c in " _-")[:60].strip()
+    return FileResponse(
+        path=str(pdf_file),
+        media_type="application/pdf",
+        filename=f"{safe_title}.pdf"
+    )
 
 
 @app.post("/api/process/{item_key_or_id}")

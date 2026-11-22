@@ -19,26 +19,64 @@ import logging
 logger = logging.getLogger("database")
 
 def _create_safe_engine(url: str):
+    import os
+    import tempfile
+    from sqlalchemy import text
+    from sqlalchemy.pool import StaticPool
+
+    def _is_engine_writable(eng) -> bool:
+        try:
+            with eng.begin() as conn:
+                conn.execute(text("CREATE TABLE IF NOT EXISTS _zam_rw_check (id INTEGER PRIMARY KEY)"))
+                conn.execute(text("DROP TABLE IF EXISTS _zam_rw_check"))
+            return True
+        except Exception as e:
+            logger.warning(f"Engine {eng.url} failed write verification: {e}")
+            return False
+
+    # Attempt 1: Configured database URL
     try:
         eng = create_engine(
             url,
             connect_args={"check_same_thread": False} if url.startswith("sqlite") else {}
         )
-        with eng.connect() as conn:
-            pass
-        return eng
+        if _is_engine_writable(eng):
+            return eng
     except Exception as e:
         logger.warning(f"Failed to initialize database at {url}: {e}")
-        # Try /tmp SQLite first
-        try:
-            tmp_url = "sqlite:////tmp/zotero_audio.db"
-            eng = create_engine(tmp_url, connect_args={"check_same_thread": False})
-            with eng.connect() as conn:
-                pass
+
+    # Attempt 2: Writable system temp file database
+    try:
+        tmp_dir = Path("/tmp") if (os.name != "nt" or Path("/tmp").exists()) else Path(tempfile.gettempdir())
+        tmp_db_file = tmp_dir / "zotero_audio.db"
+        if not tmp_db_file.exists():
+            # Try to copy existing base db content if available
+            base_db = _ROOT / "zotero_audio.db"
+            if base_db.exists():
+                try:
+                    import shutil
+                    shutil.copyfile(base_db, tmp_db_file)
+                    try:
+                        os.chmod(tmp_db_file, 0o666)
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+        tmp_url = f"sqlite:///{tmp_db_file.as_posix()}"
+        eng = create_engine(tmp_url, connect_args={"check_same_thread": False})
+        if _is_engine_writable(eng):
+            logger.info(f"Using verified writable temporary SQLite database at {tmp_url}")
             return eng
-        except Exception:
-            # Fallback to in-memory SQLite
-            return create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    except Exception as e:
+        logger.warning(f"Temporary database fallback failed: {e}")
+
+    # Attempt 3: In-memory SQLite with StaticPool (always 100% writable, zero-disk)
+    logger.warning("Falling back to in-memory SQLite database with StaticPool.")
+    return create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
+    )
 
 engine = _create_safe_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

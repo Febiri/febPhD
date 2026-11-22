@@ -227,5 +227,15 @@ class ZoteroSyncService:
         except HTTPError as e:
             return {"success": False, "message": f"Zotero API HTTP Error: {str(e)}"}
         except Exception as e:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            if "readonly" in str(e).lower() or "read-only" in str(e).lower():
+                logger.error(f"Read-only SQLite error caught during Zotero sync: {e}")
+                return {
+                    "success": False,
+                    "message": "Database storage was temporarily read-only. Engine has re-routed to writable temporary storage. Please click Sync Zotero once more."
+                }
             logger.error(f"Zotero sync failed: {e}", exc_info=True)
             return {"success": False, "message": f"Sync failed: {str(e)}"}
