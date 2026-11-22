@@ -93,7 +93,7 @@ Provide an authoritative, rigorous analysis formatted strictly as valid JSON wit
   "recommended_keywords_for_literature_search": ["key concept 1", "benchmark 2", "theory 3"]
 }}
 """
-        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
             models.insert(0, self.model)
         for m in models:
@@ -263,7 +263,7 @@ Provide an in-depth peer review and copy-paste publication suggestions formatted
   "revised_document_draft": "Complete markdown paper draft integrating all revisions..."
 }}
 """
-        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
             models.insert(0, self.model)
         for m in models:
@@ -349,7 +349,7 @@ Return strictly a valid JSON object with no markdown fences or backticks:
   "revised_document_draft": "# Complete revised paper draft in markdown format..."
 }}
 """
-        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
             models.insert(0, self.model)
         for m in models:
@@ -805,7 +805,7 @@ Return strictly a valid JSON array of objects with no markdown fences:
     "match_reason": "Matches your research in {work_desc} for travel to {dest_desc}"
   }}
 ]"""
-        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
             models.insert(0, self.model)
         for m in models:
@@ -1043,7 +1043,7 @@ Return strictly a valid JSON array of objects with no markdown:
     "match_reason": "Matches your research in {work_desc} for location {loc_desc}"
   }}
 ]"""
-        models = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"]
+        models = ["gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.model and self.model not in models and not self.model.startswith("gemini-1.5-pro"):
             models.insert(0, self.model)
         for m in models:

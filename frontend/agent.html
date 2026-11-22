@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous PhD Digital Twin & Executive Co-Pilot — Mark Febiri</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 400: '#a78bfa',
+              500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6'
+            },
+            cyan: {
+              50: '#ecfeff', 100: '#cffafe', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490'
+            },
+            emerald: {
+              50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50/60 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Nav -->
+  <header class="border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-emerald-500 p-0.5 shadow-md flex items-center justify-center transition group-hover:scale-105">
+            <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center text-base">
+              🧠
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base tracking-tight text-slate-900">PhD Digital Twin & Co-Pilot</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 font-bold border border-brand-200">Engine 07</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Autonomous Mark Febiri AI • Portfolio Synced</p>
+          </div>
+        </a>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-600">
+        <a href="/" class="hover:text-brand-600 transition">🏠 Home Corner</a>
+        <a href="/app" class="hover:text-brand-600 transition">📖 Audio Reader</a>
+        <a href="/conferences" class="hover:text-brand-600 transition">🌐 Conference Scout</a>
+        <a href="/radar" class="hover:text-brand-600 transition">🔬 Novelty Radar</a>
+        <a href="/reviewer" class="hover:text-brand-600 transition">⚖️ Reviewer #2</a>
+        <a href="/grants" class="hover:text-brand-600 transition">💰 Funding Radar</a>
+        <a href="/lab-connector" class="hover:text-brand-600 transition">🚀 Lab Connector</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    
+    <!-- Hero Persona Header -->
+    <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-brand-950 text-white shadow-xl shadow-slate-900/20 mb-8 border border-slate-700/60 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap mb-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-400/30 text-xs font-mono font-bold text-brand-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>AUTONOMOUS EXECUTIVE TWIN</span>
+          </span>
+          <span class="text-xs text-slate-400 font-mono">Linked to febmac.vercel.app</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          Mark Febiri <span class="text-brand-400 font-light">Digital Twin Studio</span>
+        </h1>
+        <p class="mt-2 text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          Your personal AI executive alter ego operating in <strong>higher perfection</strong>. Ingests your entire background (CTO at DevSpace Systems, Neuro-Symbolic RAG, ClawBio Multi-Omics), applies for grants and labs on your behalf, and proactively guides your PhD trajectory.
+        </p>
+      </div>
+
+      <!-- Sync Status & Re-Sync Button -->
+      <div class="shrink-0 p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col gap-2.5 sm:min-w-[240px]">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400">Knowledge Brain:</span>
+          <span class="text-emerald-400 font-bold font-mono">100% Synced</span>
+        </div>
+        <div class="text-[11px] text-slate-300 font-mono truncate">
+          🔗 febmac.vercel.app
+        </div>
+        <button 
+          type="button" 
+          id="sync-btn"
+          onclick="syncPortfolio()"
+          class="w-full px-3 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5"
+        >
+          <span>🔄 Live Re-Sync Portfolio</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Navigation Studio Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 mb-8" id="studio-tabs">
+      <button onclick="switchTab('apply')" id="tab-btn-apply" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition bg-brand-600 text-white shadow-md shadow-brand-500/20" data-tab="apply">
+        <span>📝 Apply On My Behalf</span>
+      </button>
+      <button onclick="switchTab('suggestions')" id="tab-btn-suggestions" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="suggestions">
+        <span>🎯 Strategic Advisory</span>
+      </button>
+      <button onclick="switchTab('brain')" id="tab-btn-brain" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="brain">
+        <span>🧠 Knowledge Brain</span>
+      </button>
+      <button onclick="switchTab('chat')" id="tab-btn-chat" class="studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100" data-tab="chat">
+        <span>💬 Talk to Your Twin</span>
+      </button>
+    </div>
+
+    <!-- ================= PANEL 1: APPLY ON MY BEHALF ================= -->
+    <div id="panel-apply" class="studio-panel space-y-6">
+      
+      <!-- Selection Card -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/50 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Autonomous Application Drafter</h3>
+            <p class="text-xs text-slate-500">Select any grant or research lab, or enter any opportunity. Your Twin writes the full dossier on your behalf.</p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="setApplyMode('grant')" id="mode-grant-btn" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-50 text-emerald-800 border border-emerald-200">
+              💰 Grants & Fellowships
+            </button>
+            <button type="button" onclick="setApplyMode('lab')" id="mode-lab-btn" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-100">
+              🚀 Industry Labs & Summits
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Opportunity Form -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Select or Type Target Opportunity Name
+            </label>
+            <input 
+              type="text" 
+              id="target-opp-title"
+              placeholder="e.g. Google PhD Fellowship, SIGCOMM Travel Grant, DeepMind Internship..."
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-medium"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Quick Pick Opportunity
+            </label>
+            <select 
+              id="opp-preset-select" 
+              onchange="onPresetSelect(this.value)"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-medium bg-white"
+            >
+              <!-- Filled dynamically via JS -->
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button 
+            type="button" 
+            id="generate-app-btn"
+            onclick="generateAutonomousApplication()"
+            class="px-7 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold text-sm shadow-md shadow-brand-500/20 flex items-center gap-2 transition active:scale-95"
+          >
+            <span>⚡ Apply on My Behalf & Draft Dossier</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Application Results Container -->
+      <div id="app-results-container" class="space-y-6 hidden">
+        
+        <!-- Action Header -->
+        <div class="p-6 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-[10px] font-mono uppercase text-brand-300 block mb-1">Generated by Mark Febiri Digital Twin</span>
+            <h3 id="app-result-title" class="text-xl font-bold text-white">Application Dossier</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Crafted with first-person executive voice citing portfolio projects and publications.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              onclick="copyFullApplicationDossier(this)"
+              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+            >
+              <span>📋 Copy Full Dossier</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="downloadApplicationDossier()"
+              class="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5"
+            >
+              <span>⬇️ Download Dossier (.md)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Dossier Component Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- 1. Statement of Purpose / Cover Letter -->
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span>📜</span> Statement of Purpose / Cover Letter
+                </span>
+                <button type="button" onclick="copyElementText('app-sop-text', this)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                  📋 Copy
+                </button>
+              </div>
+              <div id="app-sop-text" class="text-xs text-slate-700 font-serif leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+            </div>
+          </div>
+
+          <!-- 2. Research Alignment / Project Pitch -->
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span>🔬</span> Scientific Alignment & Project Fit
+                </span>
+                <button type="button" onclick="copyElementText('app-alignment-text', this)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                  📋 Copy
+                </button>
+              </div>
+              <div id="app-alignment-text" class="text-xs text-slate-700 font-serif leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+            </div>
+          </div>
+
+          <!-- 3. Itemized Budget or Cold Outreach Email -->
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span id="app-card3-title" class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span>💰</span> Itemized Budget Justification
+                </span>
+                <button type="button" onclick="copyElementText('app-card3-text', this)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                  📋 Copy
+                </button>
+              </div>
+              <div id="app-card3-text" class="text-xs text-slate-700 font-mono leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+            </div>
+          </div>
+
+          <!-- 4. CV Highlights / Interview Prep -->
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span id="app-card4-title" class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span>🌟</span> Unique Qualifications & CV Highlights
+                </span>
+                <button type="button" onclick="copyElementText('app-card4-text', this)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                  📋 Copy
+                </button>
+              </div>
+              <div id="app-card4-text" class="text-xs text-slate-700 leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100 whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= PANEL 2: STRATEGIC ADVISORY ================= -->
+    <div id="panel-suggestions" class="studio-panel space-y-6 hidden">
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono uppercase text-brand-600 font-bold">Proactive Doctoral Radar</span>
+          <h3 class="text-lg font-bold text-slate-900 mt-0.5">High-Leverage Strategic Moves for Mark Febiri</h3>
+          <p class="text-xs text-slate-500">Calculated by your Twin based on your publications, DevSpace Systems CTO role, and upcoming funding windows.</p>
+        </div>
+        <button onclick="loadStrategicSuggestions()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">
+          🔄 Refresh Suggestions
+        </button>
+      </div>
+
+      <div id="suggestions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+
+    <!-- ================= PANEL 3: KNOWLEDGE BRAIN ================= -->
+    <div id="panel-brain" class="studio-panel space-y-6 hidden">
+      
+      <!-- Profile Header -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-500 text-white font-extrabold text-2xl flex items-center justify-center shadow-md">
+              MF
+            </div>
+            <div>
+              <h3 id="brain-name" class="text-xl font-bold text-slate-900">Mark Febiri</h3>
+              <p id="brain-title" class="text-xs text-slate-500 font-medium">Co-Founder & CTO at DevSpace Systems</p>
+              <div class="flex items-center gap-3 text-xs text-slate-600 mt-1">
+                <span>📍 Vadodara, India & Sunyani, Ghana</span>
+                <span>•</span>
+                <span>📧 Febirimark27@gmail.com</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="https://febmac.vercel.app/" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+              <span>🌐 Portfolio</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+            <a href="https://github.com/Febiri" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold transition flex items-center gap-1.5">
+              <span>💻 GitHub</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Flagship Projects -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Flagship Open-Source Repositories Ingested</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-sm text-slate-900">neuro-symbolic-rag</span>
+                <span class="text-[10px] font-mono bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">Featured AI</span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">Enterprise AI framework combining stochastic LLM reasoning with deterministic symbolic logic verification and scientific literature retrieval (PubMed & arXiv).</p>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Python</span>
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">FastAPI</span>
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Knowledge Graphs</span>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-sm text-slate-900">ClawBio-Pipeline</span>
+                <span class="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Multi-Omics</span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">Production multi-omics workflow orchestrator with ClinVar ACMG variant annotation, Biopython integration, and sequence alignment.</p>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Biopython</span>
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">ClinVar</span>
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200">Genomics</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Custom PhD Notes Editor -->
+        <div class="pt-4 border-t border-slate-100">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Active Research Focus & PhD Notes (Feed updates directly to your Digital Twin)
+          </label>
+          <textarea 
+            id="brain-notes-input" 
+            rows="3" 
+            placeholder="e.g. Currently preparing our multi-omics benchmark for IEEE BIBM, seeking $3,000 conference travel sponsorship..."
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-xs font-medium"
+          ></textarea>
+          <div class="flex justify-end mt-2">
+            <button 
+              type="button" 
+              onclick="saveBrainNotes()" 
+              id="save-notes-btn"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-brand-600 text-white font-bold text-xs transition"
+            >
+              Save Notes to Twin
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= PANEL 4: CHAT WITH YOUR TWIN ================= -->
+    <div id="panel-chat" class="studio-panel space-y-4 hidden">
+      <div class="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col h-[560px]">
+        
+        <!-- Chat Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-brand-50 border border-brand-200 flex items-center justify-center text-sm font-bold text-brand-700">
+              ⚡
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900">Mark Febiri Executive Twin</h4>
+              <p class="text-[10px] text-slate-400">High-perfection alter ego with full portfolio recall</p>
+            </div>
+          </div>
+          <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+        </div>
+
+        <!-- Message History -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto py-4 space-y-3.5 pr-1 text-xs">
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0">MF</span>
+            <div class="p-3.5 rounded-2xl bg-slate-100 text-slate-800 max-w-xl leading-relaxed">
+              Hello Mark! I am your Autonomous Digital Twin, synced with your portfolio at <a href="https://febmac.vercel.app/" target="_blank" class="text-brand-600 font-bold underline">febmac.vercel.app</a>. I know your work across Neuro-Symbolic RAG, the ClawBio multi-omics orchestrator, and your leadership as CTO of DevSpace Systems. What strategic task can I draft or execute for you today?
+            </div>
+          </div>
+        </div>
+
+        <!-- Prompt Suggestions Chips -->
+        <div class="py-2 flex items-center gap-1.5 flex-wrap border-t border-slate-100 shrink-0">
+          <button onclick="sendQuickPrompt('What grants should I apply for this month given my bioinformatics and AI profile?')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-medium transition">
+            💰 What grants should I apply for?
+          </button>
+          <button onclick="sendQuickPrompt('Draft a cold email to the Principal Research Scientist at DeepMind London pitching my Neuro-Symbolic RAG framework.')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-medium transition">
+            🚀 Pitch DeepMind London
+          </button>
+          <button onclick="sendQuickPrompt('Write a 200-word research statement connecting ClawBio with foundation models for an IEEE conference travel grant.')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-medium transition">
+            📝 Draft Travel Statement
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form onsubmit="event.preventDefault(); sendChatMessage();" class="pt-2 flex items-center gap-2 shrink-0">
+          <input 
+            type="text" 
+            id="chat-input"
+            placeholder="Ask your twin to draft letters, evaluate opportunities, or plan your next move..."
+            class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-medium"
+          >
+          <button 
+            type="submit" 
+            id="chat-send-btn"
+            class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1"
+          >
+            <span>Send</span>
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let activeStudioTab = 'apply';
+    let currentApplyMode = 'grant';
+    let latestDossier = null;
+    let chatHistory = [];
+
+    const PRESET_OPPORTUNITIES = {
+      grant: [
+        { title: "Google PhD Fellowship Program", org: "Google Research", award: "$50,000 + Google Research Mentor" },
+        { title: "Microsoft Research PhD Fellowship", org: "Microsoft Research", award: "$42,000 stipend + 12-week internship" },
+        { title: "Meta Research PhD Fellowship", org: "Meta AI (FAIR)", award: "$42,000 stipend + full tuition" },
+        { title: "NeurIPS Scholar & Student Travel Support", org: "NeurIPS Foundation", award: "$2,500 travel grant + waiver" },
+        { title: "ACM SIGCOMM Student Travel Grants", org: "ACM SIGCOMM", award: "$3,000 flight + hotel coverage" },
+        { title: "Black in AI Travel & Registration Grants", org: "Black in AI", award: "Full flights + lodging + visa support" }
+      ],
+      lab: [
+        { title: "Google DeepMind Research Scientist Internship", org: "Google DeepMind", loc: "London, UK / Mountain View" },
+        { title: "Meta Fundamental AI Research (FAIR) Internship", org: "Meta FAIR", loc: "Menlo Park, CA / Paris" },
+        { title: "Microsoft Research (MSR) Doctoral Internship", org: "Microsoft Research", loc: "Redmond, WA / Cambridge, UK" },
+        { title: "Apple Machine Learning Research Internship", org: "Apple MLR", loc: "Cupertino, CA / Zurich" },
+        { title: "Google I/O Global Developer Conference", org: "Google", loc: "Mountain View, CA" },
+        { title: "AWS re:Invent Cloud & AI Expo", org: "Amazon Web Services", loc: "Las Vegas, USA" }
+      ]
+    };
+
+    function switchTab(tab) {
+      activeStudioTab = tab;
+      document.querySelectorAll('.studio-tab-btn').forEach(b => {
+        if (b.dataset.tab === tab) {
+          b.className = 'studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition bg-brand-600 text-white shadow-md shadow-brand-500/20';
+        } else {
+          b.className = 'studio-tab-btn px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        }
+      });
+
+      document.querySelectorAll('.studio-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('panel-' + tab).classList.remove('hidden');
+
+      if (tab === 'suggestions') {
+        loadStrategicSuggestions();
+      } else if (tab === 'brain') {
+        loadBrainProfile();
+      }
+    }
+
+    function setApplyMode(mode) {
+      currentApplyMode = mode;
+      const grantBtn = document.getElementById('mode-grant-btn');
+      const labBtn = document.getElementById('mode-lab-btn');
+
+      if (mode === 'grant') {
+        grantBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-50 text-emerald-800 border border-emerald-200";
+        labBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-100";
+      } else {
+        labBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-50 text-indigo-800 border border-indigo-200";
+        grantBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-100";
+      }
+      populatePresets();
+    }
+
+    function populatePresets() {
+      const select = document.getElementById('opp-preset-select');
+      const list = PRESET_OPPORTUNITIES[currentApplyMode] || [];
+      select.innerHTML = '<option value="">-- Choose from Presets --</option>' + list.map(item => `
+        <option value="${item.title}">${item.title} (${item.org})</option>
+      `).join('');
+    }
+
+    function onPresetSelect(val) {
+      if (val) {
+        document.getElementById('target-opp-title').value = val;
+      }
+    }
+
+    async function syncPortfolio() {
+      const btn = document.getElementById('sync-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ Crawling febmac.vercel.app...</span>`;
+      try {
+        const res = await fetch('/api/twin/sync', { method: 'POST' });
+        const data = await res.json();
+        alert('Digital Twin brain successfully re-synced with https://febmac.vercel.app/!');
+        loadBrainProfile();
+      } catch (err) {
+        console.warn('Sync failed:', err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🔄 Live Re-Sync Portfolio</span>`;
+      }
+    }
+
+    async function generateAutonomousApplication() {
+      const oppTitle = document.getElementById('target-opp-title').value.trim();
+      if (!oppTitle) {
+        alert('Please enter or select a target grant or lab opportunity.');
+        return;
+      }
+
+      const btn = document.getElementById('generate-app-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Twin Drafting Full Application on Your Behalf...`;
+
+      try {
+        const endpoint = currentApplyMode === 'grant' ? '/api/twin/apply-grant' : '/api/twin/apply-lab';
+        const payload = currentApplyMode === 'grant' 
+          ? { grant_title: oppTitle, grant_details: { organization: 'Sponsoring Committee' } }
+          : { lab_title: oppTitle, lab_details: { organization: 'Research Lab' } };
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderApplicationDossier(data, currentApplyMode);
+      } catch (err) {
+        console.warn('Application generation failed:', err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡ Apply on My Behalf & Draft Dossier</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+    }
+
+    function renderApplicationDossier(data, mode) {
+      latestDossier = data;
+      document.getElementById('app-results-container').classList.remove('hidden');
+      document.getElementById('app-result-title').textContent = (data.grant_title || data.opportunity_title || 'Application') + ' — Complete Dossier';
+
+      document.getElementById('app-sop-text').textContent = data.statement_of_purpose || data.cover_letter || 'Draft statement...';
+      document.getElementById('app-alignment-text').textContent = data.research_justification || data.project_alignment_pitch || 'Research justification...';
+
+      if (mode === 'grant') {
+        document.getElementById('app-card3-title').innerHTML = `<span>💰</span> Itemized Budget Justification`;
+        const budgetLines = (data.itemized_budget || []).map(b => `${b.item}: ${b.amount} (${b.notes})`).join('\n');
+        document.getElementById('app-card3-text').textContent = budgetLines || 'Budget estimated.';
+
+        document.getElementById('app-card4-title').innerHTML = `<span>🌟</span> Key Qualifications & CV Highlights`;
+        const highlights = (data.cv_alignment_highlights || []).join('\n• ');
+        document.getElementById('app-card4-text').textContent = '• ' + highlights;
+      } else {
+        document.getElementById('app-card3-title').innerHTML = `<span>📧</span> Cold Outreach Email to PI / Lead`;
+        document.getElementById('app-card3-text').textContent = data.cold_outreach_email || 'Email draft generated.';
+
+        document.getElementById('app-card4-title').innerHTML = `<span>🎯</span> Interview Preparation Q&A`;
+        const qa = (data.interview_prep_qa || []).map(q => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n');
+        document.getElementById('app-card4-text').textContent = qa;
+      }
+
+      document.getElementById('app-results-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyElementText(id, btn) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    function copyFullApplicationDossier(btn) {
+      if (!latestDossier) return;
+      const md = latestDossier.full_application_dossier_markdown || JSON.stringify(latestDossier, null, 2);
+      navigator.clipboard.writeText(md).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied Full Dossier!';
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    function downloadApplicationDossier() {
+      if (!latestDossier) return;
+      const title = (latestDossier.grant_title || latestDossier.opportunity_title || 'application').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const md = latestDossier.full_application_dossier_markdown || JSON.stringify(latestDossier, null, 2);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mark_febiri_${title}_dossier.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function loadStrategicSuggestions() {
+      const grid = document.getElementById('suggestions-grid');
+      grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 font-mono text-xs">Computing strategic doctoral roadmap...</div>`;
+      try {
+        const res = await fetch('/api/twin/suggestions');
+        const list = await res.json();
+        grid.innerHTML = (list || []).map(s => `
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-brand-300 transition">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-brand-50 text-brand-700 font-bold border border-brand-200">${s.timeline}</span>
+                <span class="text-xs font-bold text-emerald-700">${s.impact_level}</span>
+              </div>
+              <h4 class="text-base font-bold text-slate-900 group-hover:text-brand-700 transition mb-1.5">${s.title}</h4>
+              <p class="text-xs text-slate-600 mb-3 leading-relaxed">${s.rationale}</p>
+              <div class="space-y-1 text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
+                ${(s.action_steps || []).map(step => `<div class="flex items-start gap-1.5"><span class="text-emerald-500 font-bold">▶</span><span>${step}</span></div>`).join('')}
+              </div>
+            </div>
+            <button onclick="prefillApply('${s.title}')" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <span>Execute with Twin</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.warn('Failed to load suggestions:', err);
+      }
+    }
+
+    function prefillApply(title) {
+      switchTab('apply');
+      document.getElementById('target-opp-title').value = title;
+      generateAutonomousApplication();
+    }
+
+    async function loadBrainProfile() {
+      try {
+        const res = await fetch('/api/twin/profile');
+        const p = await res.json();
+        document.getElementById('brain-name').textContent = p.name || 'Mark Febiri';
+        document.getElementById('brain-title').textContent = p.title || 'CTO at DevSpace Systems';
+        document.getElementById('brain-notes-input').value = p.custom_notes || '';
+      } catch (err) {
+        console.warn('Could not load profile:', err);
+      }
+    }
+
+    async function saveBrainNotes() {
+      const notes = document.getElementById('brain-notes-input').value;
+      const btn = document.getElementById('save-notes-btn');
+      btn.textContent = 'Saving...';
+      try {
+        await fetch('/api/twin/update-profile', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ custom_notes: notes })
+        });
+        btn.textContent = '✅ Saved to Twin';
+        setTimeout(() => { btn.textContent = 'Save Notes to Twin'; }, 2000);
+      } catch (err) {
+        btn.textContent = 'Error';
+      }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      appendMessage('user', text);
+      const btn = document.getElementById('chat-send-btn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/twin/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message: text, history: chatHistory })
+        });
+        const data = await res.json();
+        appendMessage('assistant', data.reply || 'Task acknowledged, Mark.');
+      } catch (err) {
+        appendMessage('assistant', 'Error communicating with Digital Twin backend.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chat-input').value = promptText;
+      sendChatMessage();
+    }
+
+    function appendMessage(role, content) {
+      chatHistory.push({ role, content });
+      const container = document.getElementById('chat-messages');
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
+      div.innerHTML = `
+        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'} flex items-center justify-center font-bold text-[10px] shrink-0">${isUser ? 'YOU' : 'MF'}</span>
+        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-800'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function clearChat() {
+      chatHistory = [];
+      document.getElementById('chat-messages').innerHTML = `
+        <div class="flex items-start gap-2.5">
+          <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0">MF</span>
+          <div class="p-3.5 rounded-2xl bg-slate-100 text-slate-800 max-w-xl leading-relaxed">
+            Chat cleared. How can I assist you with your doctoral milestones, Mark?
+          </div>
+        </div>
+      `;
+    }
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      populatePresets();
+      loadBrainProfile();
+    });
+  </script>
+
+</body>
+</html>

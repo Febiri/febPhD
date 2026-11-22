@@ -44,6 +44,7 @@ try:
         ResearchGapService, ReviewerSimulatorService,
         FundingScoutService, IndustryLabService
     )
+    from backend.twin_agent import TwinAgentService, PortfolioSyncService
 except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
@@ -61,6 +62,7 @@ except ImportError:
         ResearchGapService, ReviewerSimulatorService,
         FundingScoutService, IndustryLabService
     )
+    from twin_agent import TwinAgentService, PortfolioSyncService
 
 logger = logging.getLogger("api")
 
@@ -154,6 +156,30 @@ class LabSearchRequest(BaseModel):
     research_work: Optional[str] = ""
     location: Optional[str] = "All"
     item_type: Optional[str] = "All"
+
+
+class TwinSyncRequest(BaseModel):
+    url: Optional[str] = "https://febmac.vercel.app"
+
+
+class TwinUpdateRequest(BaseModel):
+    custom_notes: Optional[str] = None
+    active_focus: Optional[str] = None
+
+
+class TwinApplyGrantRequest(BaseModel):
+    grant_title: str
+    grant_details: Optional[Dict[str, Any]] = {}
+
+
+class TwinApplyLabRequest(BaseModel):
+    lab_title: str
+    lab_details: Optional[Dict[str, Any]] = {}
+
+
+class TwinChatRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, str]]] = []
 
 
 # Core Pipeline Execution Helper
@@ -1147,6 +1173,58 @@ def post_labs(payload: LabSearchRequest):
     )
 
 
+# =====================================================================
+# ENGINE 7: AUTONOMOUS PHD DIGITAL TWIN & EXECUTIVE CO-PILOT ENDPOINTS
+# =====================================================================
+@app.get("/api/twin/profile")
+def get_twin_profile():
+    """Returns Mark Febiri's digital twin knowledge base, synced with febmac.vercel.app."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.get_profile()
+
+
+@app.post("/api/twin/sync")
+def sync_twin_portfolio(payload: TwinSyncRequest = TwinSyncRequest()):
+    """Live re-crawls Mark Febiri's portfolio website to refresh profile knowledge."""
+    return PortfolioSyncService.live_sync(base_url=payload.url or "https://febmac.vercel.app")
+
+
+@app.post("/api/twin/update-profile")
+def update_twin_profile(payload: TwinUpdateRequest):
+    """Updates custom research notes or active focus for the Digital Twin."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.update_profile(custom_notes=payload.custom_notes, active_focus=payload.active_focus)
+
+
+@app.post("/api/twin/apply-grant")
+def twin_apply_grant(payload: TwinApplyGrantRequest):
+    """Autonomous drafter: creates complete grant/fellowship dossier on Mark's behalf."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.apply_for_grant(grant_title=payload.grant_title, grant_details=payload.grant_details or {})
+
+
+@app.post("/api/twin/apply-lab")
+def twin_apply_lab(payload: TwinApplyLabRequest):
+    """Autonomous drafter: creates complete research lab internship pitch & cold email on Mark's behalf."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.apply_for_lab(lab_title=payload.lab_title, lab_details=payload.lab_details or {})
+
+
+@app.get("/api/twin/suggestions")
+def get_twin_suggestions():
+    """Proactive strategic advisor: returns prioritized actions Mark should take over the next 14-60 days."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    return service.get_strategic_suggestions()
+
+
+@app.post("/api/twin/chat")
+def chat_with_twin(payload: TwinChatRequest):
+    """Interactive chat with Mark Febiri's perfectionist digital twin."""
+    service = TwinAgentService(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
+    response_text = service.chat_with_twin(user_message=payload.message, chat_history=payload.history or [])
+    return {"reply": response_text}
+
+
 @app.get("/api/health")
 def api_health():
     """Health check endpoint to test runtime status."""
@@ -1272,6 +1350,18 @@ def serve_grants():
 @app.get("/summits")
 def serve_lab_connector():
     content = _load_html("lab_connector.html")
+    if content:
+        return HTMLResponse(content=content)
+    return serve_home()
+
+
+# Serve Engine 07: Autonomous PhD Digital Twin & Executive Co-Pilot Studio
+@app.get("/agent")
+@app.get("/agent/")
+@app.get("/twin")
+@app.get("/copilot")
+def serve_agent():
+    content = _load_html("agent.html")
     if content:
         return HTMLResponse(content=content)
     return serve_home()
