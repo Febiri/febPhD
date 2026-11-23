@@ -6,8 +6,8 @@ if str(_ROOT) not in sys.path:
 
 from datetime import datetime
 from typing import Generator
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, LargeBinary, text
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, deferred
 
 try:
     from backend.config import DATABASE_URL
@@ -149,6 +149,8 @@ class Paper(Base):
     summary_audio_duration = Column(Float, default=0.0)
     full_audio_path = Column(String(512), nullable=True)
     full_audio_duration = Column(Float, default=0.0)
+    summary_audio_blob = deferred(Column(LargeBinary, nullable=True))
+    full_audio_blob = deferred(Column(LargeBinary, nullable=True))
     voice_used = Column(String(64), default="en-US-ChristopherNeural")
     
     # Processing status: "Pending", "Processing", "Ready", "Failed"
@@ -215,27 +217,108 @@ def init_db():
         logger.warning(f"Warning: could not execute create_all on database: {e}")
         return
 
-    # Automatically migrate SQLite columns if missing
+    # Automatically migrate columns if missing (SQLite or PostgreSQL)
     try:
-        with engine.connect() as conn:
-            cursor = conn.connection.cursor()
-            cursor.execute("PRAGMA table_info(papers)")
-            existing_cols = [row[1] for row in cursor.fetchall()]
-            new_cols = [
-                ("full_text", "TEXT"),
-                ("audio_mode", "VARCHAR(32) DEFAULT 'summary'"),
-                ("summary_audio_path", "VARCHAR(512)"),
-                ("summary_audio_duration", "FLOAT DEFAULT 0.0"),
-                ("full_audio_path", "VARCHAR(512)"),
-                ("full_audio_duration", "FLOAT DEFAULT 0.0"),
-            ]
-            for col_name, col_def in new_cols:
-                if col_name not in existing_cols:
-                    cursor.execute(f"ALTER TABLE papers ADD COLUMN {col_name} {col_def}")
-            conn.connection.commit()
+        dialect_name = getattr(engine.dialect, "name", "sqlite")
+        if dialect_name == "sqlite":
+            with engine.connect() as conn:
+                cursor = conn.connection.cursor()
+                cursor.execute("PRAGMA table_info(papers)")
+                existing_cols = [row[1] for row in cursor.fetchall()]
+                new_cols = [
+                    ("full_text", "TEXT"),
+                    ("audio_mode", "VARCHAR(32) DEFAULT 'summary'"),
+                    ("summary_audio_path", "VARCHAR(512)"),
+                    ("summary_audio_duration", "FLOAT DEFAULT 0.0"),
+                    ("full_audio_path", "VARCHAR(512)"),
+                    ("full_audio_duration", "FLOAT DEFAULT 0.0"),
+                    ("summary_audio_blob", "BLOB"),
+                    ("full_audio_blob", "BLOB"),
+                ]
+                for col_name, col_def in new_cols:
+                    if col_name not in existing_cols:
+                        cursor.execute(f"ALTER TABLE papers ADD COLUMN {col_name} {col_def}")
+                conn.connection.commit()
+        elif dialect_name == "postgresql":
+            with engine.begin() as conn:
+                pg_cols = [
+                    ("full_text", "TEXT"),
+                    ("audio_mode", "VARCHAR(32) DEFAULT 'summary'"),
+                    ("summary_audio_path", "VARCHAR(512)"),
+                    ("summary_audio_duration", "FLOAT DEFAULT 0.0"),
+                    ("full_audio_path", "VARCHAR(512)"),
+                    ("full_audio_duration", "FLOAT DEFAULT 0.0"),
+                    ("summary_audio_blob", "BYTEA"),
+                    ("full_audio_blob", "BYTEA"),
+                ]
+                for col_name, col_def in pg_cols:
+                    conn.execute(text(f"ALTER TABLE papers ADD COLUMN IF NOT EXISTS {col_name} {col_def}"))
     except Exception as e:
-        # Pass if not SQLite or column already added
-        pass
+        logger.warning(f"Database migration check notice: {e}")
+
+    # Backfill: If existing papers have audio files on local disk but blobs are not yet populated,
+    # read the audio files and cache them into the database so they are permanently preserved.
+    try:
+        from backend.config import AUDIO_DIR, STATIC_DIR
+        search_dirs = [AUDIO_DIR, STATIC_DIR / "audio"]
+        db = SessionLocal()
+        try:
+            papers_to_backfill = db.query(Paper).all()
+            updated_count = 0
+            for paper in papers_to_backfill:
+                # Check summary audio
+                if paper.summary_audio_blob is None:
+                    candidate = None
+                    if paper.summary_audio_path:
+                        fname = Path(paper.summary_audio_path).name
+                        for sdir in search_dirs:
+                            p = sdir / fname
+                            if p.exists() and p.stat().st_size > 0:
+                                candidate = p
+                                break
+                    if not candidate:
+                        # Glob search for summary mp3
+                        for sdir in search_dirs:
+                            if sdir.exists():
+                                matches = [f for f in sdir.glob(f"paper_{paper.id}_*.mp3") if "_full_" not in f.name]
+                                if matches and matches[0].stat().st_size > 0:
+                                    candidate = matches[0]
+                                    paper.summary_audio_path = f"/api/audio/{candidate.name}"
+                                    break
+                    if candidate:
+                        paper.summary_audio_blob = candidate.read_bytes()
+                        updated_count += 1
+
+                # Check full audio
+                if paper.full_audio_blob is None:
+                    candidate = None
+                    if paper.full_audio_path:
+                        fname = Path(paper.full_audio_path).name
+                        for sdir in search_dirs:
+                            p = sdir / fname
+                            if p.exists() and p.stat().st_size > 0:
+                                candidate = p
+                                break
+                    if not candidate:
+                        # Glob search for full mp3
+                        for sdir in search_dirs:
+                            if sdir.exists():
+                                matches = [f for f in sdir.glob(f"paper_{paper.id}_full_*.mp3")]
+                                if matches and matches[0].stat().st_size > 0:
+                                    candidate = matches[0]
+                                    paper.full_audio_path = f"/api/audio/{candidate.name}"
+                                    break
+                    if candidate:
+                        paper.full_audio_blob = candidate.read_bytes()
+                        updated_count += 1
+
+            if updated_count > 0:
+                db.commit()
+                logger.info(f"Backfilled {updated_count} existing audio tracks into database blobs for persistent storage.")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Audio blob backfill notice: {e}")
 
 
 def get_db() -> Generator[Session, None, None]:
