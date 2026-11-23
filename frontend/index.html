@@ -2046,9 +2046,12 @@
           const cachedData = JSON.parse(cached);
           if (cachedData.papers && cachedData.papers.length > 0) {
             allPapers = cachedData.papers;
-            document.getElementById('stat-total-papers').textContent = cachedData.total || allPapers.length;
-            document.getElementById('stat-ready-briefings').textContent = cachedData.ready_count || 0;
-            document.getElementById('stat-audio-time').textContent = `${cachedData.total_audio_minutes || 0.0} min`;
+            const statTotalEl = document.getElementById('stat-total-papers');
+            const statReadyEl = document.getElementById('stat-ready-briefings');
+            const statAudioEl = document.getElementById('stat-audio-time');
+            if (statTotalEl) statTotalEl.textContent = cachedData.total || allPapers.length;
+            if (statReadyEl) statReadyEl.textContent = cachedData.ready_count || 0;
+            if (statAudioEl) statAudioEl.textContent = `${cachedData.total_audio_minutes || 0.0} min`;
             if (loadingEl) loadingEl.classList.add('hidden');
             if (emptyEl) emptyEl.classList.add('hidden');
             if (currentViewMode === 'list') {
@@ -2091,9 +2094,12 @@
         } catch (e) {}
 
         // Update Stats
-        document.getElementById('stat-total-papers').textContent = data.total || 0;
-        document.getElementById('stat-ready-briefings').textContent = data.ready_count || 0;
-        document.getElementById('stat-audio-time').textContent = `${data.total_audio_minutes || 0.0} min`;
+        const statTotalEl = document.getElementById('stat-total-papers');
+        const statReadyEl = document.getElementById('stat-ready-briefings');
+        const statAudioEl = document.getElementById('stat-audio-time');
+        if (statTotalEl) statTotalEl.textContent = data.total || 0;
+        if (statReadyEl) statReadyEl.textContent = data.ready_count || 0;
+        if (statAudioEl) statAudioEl.textContent = `${data.total_audio_minutes || 0.0} min`;
 
         if (loadingEl) loadingEl.classList.add('hidden');
 
@@ -4058,12 +4064,6 @@
           renderMathInElementSafely(proseDiv);
         }
       }
-      
-      container.appendChild(div);
-      if (scroll) {
-        container.scrollTop = container.scrollHeight;
-      }
-    }
       
       container.appendChild(div);
       if (scroll) {
