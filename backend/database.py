@@ -24,6 +24,16 @@ def _create_safe_engine(url: str):
     from sqlalchemy import text
     from sqlalchemy.pool import StaticPool
 
+    def _normalize_db_url(raw: str) -> str:
+        if not raw:
+            return raw
+        clean = raw.strip().strip("'").strip('"')
+        if clean.startswith("postgres://"):
+            clean = "postgresql://" + clean[len("postgres://"):]
+        return clean
+
+    norm_url = _normalize_db_url(url)
+
     def _is_engine_writable(eng) -> bool:
         try:
             with eng.begin() as conn:
@@ -34,16 +44,39 @@ def _create_safe_engine(url: str):
             logger.warning(f"Engine {eng.url} failed write verification: {e}")
             return False
 
-    # Attempt 1: Configured database URL
-    try:
-        eng = create_engine(
-            url,
-            connect_args={"check_same_thread": False} if url.startswith("sqlite") else {}
-        )
-        if _is_engine_writable(eng):
-            return eng
-    except Exception as e:
-        logger.warning(f"Failed to initialize database at {url}: {e}")
+    # Attempt 1: Configured database URL (Supabase PostgreSQL or SQLite)
+    if norm_url.startswith("postgresql"):
+        try:
+            eng = create_engine(
+                norm_url,
+                pool_pre_ping=True,
+                pool_recycle=300,
+                pool_size=10,
+                max_overflow=20
+            )
+            if _is_engine_writable(eng):
+                logger.info(f"Successfully verified writable PostgreSQL/Supabase database at {eng.url.host}")
+                return eng
+        except Exception as e:
+            logger.warning(f"PostgreSQL connection failed: {e}. Trying pg8000 dialect...")
+            try:
+                pg8000_url = norm_url.replace("postgresql://", "postgresql+pg8000://").replace("+psycopg2", "+pg8000")
+                eng = create_engine(pg8000_url, pool_pre_ping=True, pool_recycle=300)
+                if _is_engine_writable(eng):
+                    logger.info(f"Successfully connected via pg8000 driver to {eng.url.host}")
+                    return eng
+            except Exception as e2:
+                logger.warning(f"pg8000 fallback also failed: {e2}")
+    else:
+        try:
+            eng = create_engine(
+                norm_url,
+                connect_args={"check_same_thread": False} if norm_url.startswith("sqlite") else {}
+            )
+            if _is_engine_writable(eng):
+                return eng
+        except Exception as e:
+            logger.warning(f"Failed to initialize database at {norm_url}: {e}")
 
     # Attempt 2: Writable system temp file database
     try:

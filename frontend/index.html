@@ -517,10 +517,25 @@
             <span class="text-[10px] font-mono font-bold text-slate-400 group-hover:text-amber-400 leading-none">+30s</span>
           </button>
 
-          <!-- Speed Toggle -->
-          <button id="player-speed-btn" onclick="cyclePlaybackRate()" class="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 ml-1" title="Playback Speed">
-            1.0x
-          </button>
+          <!-- Reading Speed Controls -->
+          <div class="relative flex items-center bg-dark-800 border border-dark-700 rounded-xl p-0.5 text-xs font-mono">
+            <button onclick="adjustPlaybackSpeed(-0.25)" class="px-1.5 py-0.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition font-bold" title="Decrease speed (-0.25x)">-</button>
+            <button id="player-speed-btn" onclick="togglePlayerSpeedMenu()" class="px-2 py-0.5 text-[11px] text-slate-200 font-semibold hover:text-brand-400 transition" title="Choose playback speed">
+              1.0x
+            </button>
+            <button onclick="adjustPlaybackSpeed(0.25)" class="px-1.5 py-0.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition font-bold" title="Increase speed (+0.25x)">+</button>
+            
+            <!-- Quick Speed Menu -->
+            <div id="player-speed-menu" class="hidden absolute bottom-full mb-2 left-0 w-36 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl py-1.5 text-xs z-50">
+              <div class="px-3 py-1 font-semibold text-slate-400 text-[10px] uppercase border-b border-dark-800">Reading Speed</div>
+              <button onclick="setPlaybackSpeed(0.75)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">0.75x (Relaxed)</button>
+              <button onclick="setPlaybackSpeed(1.0)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">1.0x (Normal)</button>
+              <button onclick="setPlaybackSpeed(1.25)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">1.25x (Brisk)</button>
+              <button onclick="setPlaybackSpeed(1.5)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">1.5x (Fast)</button>
+              <button onclick="setPlaybackSpeed(1.75)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">1.75x (Very Fast)</button>
+              <button onclick="setPlaybackSpeed(2.0)" class="w-full text-left px-3 py-1.5 hover:bg-dark-800 text-slate-300 hover:text-white transition">2.0x (Double Speed)</button>
+            </div>
+          </div>
 
           <!-- Specific Part / Chapters Popover Button -->
           <button id="player-chapters-btn" onclick="toggleChaptersPopover()" class="px-2.5 py-1 text-xs font-semibold rounded-xl bg-dark-800 hover:bg-dark-750 text-brand-400 hover:text-brand-300 border border-brand-500/30 flex items-center gap-1.5 shadow-sm transition active:scale-95" title="Choose specific section / chapter to listen to">
@@ -744,6 +759,31 @@
             </svg>
             <span>Re-Generate</span>
           </button>
+
+          <!-- Reading Speed Stepper in Reader Studio -->
+          <div class="flex items-center bg-dark-800 border border-dark-700 rounded-xl p-0.5 text-xs font-mono" title="Reading Playback Speed">
+            <button onclick="adjustPlaybackSpeed(-0.25)" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition font-bold" title="Decrease speed (-0.25x)">-</button>
+            <button id="reader-speed-label" onclick="cyclePlaybackRate()" class="px-2 py-1 text-slate-200 font-semibold hover:text-brand-400 transition" title="Current Speed (click to cycle)">1.0x</button>
+            <button onclick="adjustPlaybackSpeed(0.25)" class="px-2 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-dark-700 transition font-bold" title="Increase speed (+0.25x)">+</button>
+          </div>
+
+          <!-- Voice Accent Switcher in Reader Studio -->
+          <div class="relative">
+            <button id="reader-voice-btn" onclick="toggleReaderVoiceMenu()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-200 border border-dark-700 shadow-sm transition" title="Choose Voice & Accent for reading this paper">
+              <span>🗣️</span>
+              <span id="reader-voice-label">🇬🇭 Abeo</span>
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="reader-voice-menu" class="hidden absolute left-0 mt-1.5 w-72 rounded-2xl bg-dark-900 border border-dark-750 shadow-2xl p-2 z-50 text-xs max-h-80 overflow-y-auto">
+              <div class="px-2 py-1 font-bold text-slate-400 text-[10px] uppercase border-b border-dark-800 mb-1 flex items-center justify-between">
+                <span>Select Voice & Accent</span>
+                <span class="text-brand-400 font-normal">Edge Neural</span>
+              </div>
+              <div id="reader-voice-options-container" class="space-y-1">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Navigation Tabs inside Drawer -->
@@ -778,17 +818,36 @@
         <!-- View 1: 4-Part Structured Breakdown Cards -->
         <div id="view-breakdown" class="space-y-4">
           
+          <!-- Breakdown View Mode Switcher -->
+          <div class="flex items-center justify-between p-2.5 rounded-2xl bg-dark-900 border border-dark-800">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400 font-medium">Card View:</span>
+              <button id="breakdown-mode-summary-btn" onclick="setBreakdownDisplayMode('summary')" class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-brand-600 text-white shadow-sm transition">
+                ⚡ Summary View
+              </button>
+              <button id="breakdown-mode-detailed-btn" onclick="setBreakdownDisplayMode('detailed')" class="px-2.5 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition">
+                🔬 Detailed Exposition
+              </button>
+            </div>
+            <span class="text-[11px] text-slate-500 font-mono hidden sm:inline">💡 Click any card to view full detailed breakdown & insights</span>
+          </div>
+
           <!-- Section 1: The Core Problem -->
-          <div class="glass-card rounded-2xl p-5 border-l-4 border-l-rose-500/80 transition shadow-sm">
+          <div id="card-sec-problem" onclick="openSectionDetailModal('problem')" class="glass-card rounded-2xl p-5 border-l-4 border-l-rose-500/80 transition shadow-sm cursor-pointer hover:border-dark-600 hover:bg-dark-850/80 hover:shadow-xl group" title="Click to view detailed breakdown, formulas & insights">
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-dark-800/80">
               <div class="flex items-center gap-2.5">
                 <div class="w-6 h-6 rounded-lg bg-rose-500/15 text-rose-400 flex items-center justify-center text-xs font-bold font-mono">1</div>
                 <h3 class="text-sm font-bold text-rose-400 tracking-wide uppercase">The Core Problem & Theoretical Foundation</h3>
               </div>
-              <button onclick="playPaperSection('problem')" class="text-[11px] font-mono text-rose-300 hover:text-white px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
-                <span>▶ Jump here</span>
-                <span id="sec-problem-time" class="text-[10px] text-slate-400 font-mono">(0:00)</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-400 font-mono group-hover:text-rose-300 transition flex items-center gap-1">
+                  🔍 Details &rarr;
+                </span>
+                <button onclick="event.stopPropagation(); playPaperSection('problem')" class="text-[11px] font-mono text-rose-300 hover:text-white px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
+                  <span>▶ Jump here</span>
+                  <span id="sec-problem-time" class="text-[10px] text-slate-400 font-mono">(0:00)</span>
+                </button>
+              </div>
             </div>
             <div id="sec-problem" class="text-sm text-slate-300 leading-relaxed font-sans prose prose-invert prose-sm max-w-none">
               <!-- Content -->
@@ -796,16 +855,21 @@
           </div>
 
           <!-- Section 2: Methodology & Architecture -->
-          <div class="glass-card rounded-2xl p-5 border-l-4 border-l-indigo-500/80 transition shadow-sm">
+          <div id="card-sec-methodology" onclick="openSectionDetailModal('methodology')" class="glass-card rounded-2xl p-5 border-l-4 border-l-indigo-500/80 transition shadow-sm cursor-pointer hover:border-dark-600 hover:bg-dark-850/80 hover:shadow-xl group" title="Click to view detailed breakdown, formulas & insights">
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-dark-800/80">
               <div class="flex items-center gap-2.5">
                 <div class="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xs font-bold font-mono">2</div>
                 <h3 class="text-sm font-bold text-indigo-400 tracking-wide uppercase">Methodology & Architectural Formulation</h3>
               </div>
-              <button onclick="playPaperSection('methodology')" class="text-[11px] font-mono text-indigo-300 hover:text-white px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
-                <span>▶ Jump here</span>
-                <span id="sec-methodology-time" class="text-[10px] text-slate-400 font-mono">(1:31)</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-400 font-mono group-hover:text-indigo-300 transition flex items-center gap-1">
+                  🔍 Details &rarr;
+                </span>
+                <button onclick="event.stopPropagation(); playPaperSection('methodology')" class="text-[11px] font-mono text-indigo-300 hover:text-white px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
+                  <span>▶ Jump here</span>
+                  <span id="sec-methodology-time" class="text-[10px] text-slate-400 font-mono">(1:31)</span>
+                </button>
+              </div>
             </div>
             <div id="sec-methodology" class="text-sm text-slate-300 leading-relaxed font-sans prose prose-invert prose-sm max-w-none">
               <!-- Content -->
@@ -813,16 +877,21 @@
           </div>
 
           <!-- Section 3: Key Results & Findings -->
-          <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500/80 transition shadow-sm">
+          <div id="card-sec-results" onclick="openSectionDetailModal('results')" class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500/80 transition shadow-sm cursor-pointer hover:border-dark-600 hover:bg-dark-850/80 hover:shadow-xl group" title="Click to view detailed breakdown, formulas & insights">
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-dark-800/80">
               <div class="flex items-center gap-2.5">
                 <div class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-xs font-bold font-mono">3</div>
                 <h3 class="text-sm font-bold text-emerald-400 tracking-wide uppercase">Empirical Results, Benchmarks & Statistical Significance</h3>
               </div>
-              <button onclick="playPaperSection('results')" class="text-[11px] font-mono text-emerald-300 hover:text-white px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
-                <span>▶ Jump here</span>
-                <span id="sec-results-time" class="text-[10px] text-slate-400 font-mono">(3:10)</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-400 font-mono group-hover:text-emerald-300 transition flex items-center gap-1">
+                  🔍 Details &rarr;
+                </span>
+                <button onclick="event.stopPropagation(); playPaperSection('results')" class="text-[11px] font-mono text-emerald-300 hover:text-white px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
+                  <span>▶ Jump here</span>
+                  <span id="sec-results-time" class="text-[10px] text-slate-400 font-mono">(3:10)</span>
+                </button>
+              </div>
             </div>
             <div id="sec-results" class="text-sm text-slate-300 leading-relaxed font-sans prose prose-invert prose-sm max-w-none">
               <!-- Content -->
@@ -830,16 +899,21 @@
           </div>
 
           <!-- Section 4: Limitations & Future Outlook -->
-          <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500/80 transition shadow-sm">
+          <div id="card-sec-limitations" onclick="openSectionDetailModal('limitations')" class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500/80 transition shadow-sm cursor-pointer hover:border-dark-600 hover:bg-dark-850/80 hover:shadow-xl group" title="Click to view detailed breakdown, formulas & insights">
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-dark-800/80">
               <div class="flex items-center gap-2.5">
                 <div class="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center text-xs font-bold font-mono">4</div>
                 <h3 class="text-sm font-bold text-amber-400 tracking-wide uppercase">Critical Limitations, Theoretical Bounds & Future Research</h3>
               </div>
-              <button onclick="playPaperSection('limitations')" class="text-[11px] font-mono text-amber-300 hover:text-white px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
-                <span>▶ Jump here</span>
-                <span id="sec-limitations-time" class="text-[10px] text-slate-400 font-mono">(4:25)</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-slate-400 font-mono group-hover:text-amber-300 transition flex items-center gap-1">
+                  🔍 Details &rarr;
+                </span>
+                <button onclick="event.stopPropagation(); playPaperSection('limitations')" class="text-[11px] font-mono text-amber-300 hover:text-white px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 flex items-center gap-1.5 transition" title="Start audio from this section">
+                  <span>▶ Jump here</span>
+                  <span id="sec-limitations-time" class="text-[10px] text-slate-400 font-mono">(4:25)</span>
+                </button>
+              </div>
             </div>
             <div id="sec-limitations" class="text-sm text-slate-300 leading-relaxed font-sans prose prose-invert prose-sm max-w-none">
               <!-- Content -->
@@ -1151,7 +1225,17 @@
             <optgroup label="US, UK & Australia">
               <option value="en-US-ChristopherNeural">🇺🇸 Christopher (US - Authoritative, Mentor)</option>
               <option value="en-US-JennyNeural">🇺🇸 Jenny (US - Warm, Engaging)</option>
+              <option value="en-US-GuyNeural">🇺🇸 Guy (US - Natural, Conversational)</option>
+              <option value="en-US-AriaNeural">🇺🇸 Aria (US - Professional, Clear)</option>
               <option value="en-GB-RyanNeural">🇬🇧 Ryan (UK - Academic, Articulate)</option>
+              <option value="en-GB-SoniaNeural">🇬🇧 Sonia (UK - Formal, Scholarly)</option>
+              <option value="en-AU-WilliamNeural">🇦🇺 William (Australia - Relaxed, Direct)</option>
+            </optgroup>
+            <optgroup label="India, Canada & Ireland">
+              <option value="en-IN-PrabhatNeural">🇮🇳 Prabhat (India - Professional, Articulate)</option>
+              <option value="en-IN-NeerjaNeural">🇮🇳 Neerja (India - Melodic, Clear)</option>
+              <option value="en-CA-LiamNeural">🇨🇦 Liam (Canada - Calm & Modern)</option>
+              <option value="en-IE-ConnorNeural">🇮🇪 Connor (Ireland - Scholarly & Warm)</option>
             </optgroup>
           </select>
         </div>
@@ -1163,6 +1247,31 @@
             <option value="summary">📝 Conversational Summary (Senior Mentor 4-Part Briefing)</option>
             <option value="full_paper">📖 Full Paper Reading (100% Verbatim Cleaned Document)</option>
           </select>
+        </div>
+
+        <!-- Database / Supabase Cloud Persistence -->
+        <div class="pt-3 border-t border-dark-800">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-semibold text-slate-200">Database & Cloud Persistence</span>
+              <span id="setting-db-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-800 text-slate-300 border border-dark-700">Checking...</span>
+            </div>
+            <a href="https://supabase.com" target="_blank" class="text-[11px] text-emerald-400 hover:underline">Get Supabase DB &rarr;</a>
+          </div>
+          <div class="flex gap-2">
+            <input 
+              id="setting-db-url" 
+              type="password" 
+              placeholder="postgresql://postgres.[ref]:[pass]@aws-0...pooler.supabase.com:6543/postgres" 
+              class="flex-1 bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500 font-mono"
+            />
+            <button onclick="testDatabaseUrl()" class="px-3 py-2 text-xs font-medium rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-dark-700 transition">
+              Test
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Connecting to a cloud database (e.g., Supabase PostgreSQL) permanently persists all your synced papers, summaries, and notes across server restarts so you never have to re-sync or re-wait.
+          </p>
         </div>
 
       </div>
@@ -1426,6 +1535,58 @@
   </div>
 
 
+  <!-- ================= SECTION DETAIL & DEEP-DIVE MODAL ================= -->
+  <div id="section-detail-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-dark-900 border border-dark-750 w-full max-w-2xl rounded-3xl shadow-2xl p-6 space-y-4 max-h-[85vh] flex flex-col animate-in fade-in duration-150" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-dark-800 pb-3">
+        <div class="flex items-center gap-3">
+          <div id="section-modal-badge" class="w-8 h-8 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-sm font-bold font-mono">1</div>
+          <div>
+            <h3 id="section-modal-title" class="text-sm font-bold text-white">Section Breakdown</h3>
+            <p id="section-modal-subtitle" class="text-[11px] text-slate-400 font-mono">Detailed Analysis & Key Insights</p>
+          </div>
+        </div>
+        <button onclick="closeSectionDetailModal()" class="text-slate-400 hover:text-white text-base">✕</button>
+      </div>
+
+      <!-- Segmented View Toggle in Section Modal -->
+      <div class="flex items-center gap-2 bg-dark-950 p-1 rounded-xl border border-dark-800 text-xs">
+        <button id="sec-modal-tab-summary" onclick="switchSectionModalTab('summary')" class="flex-1 py-1.5 rounded-lg bg-dark-800 text-white font-semibold shadow-sm transition">
+          ⚡ Executive Highlights
+        </button>
+        <button id="sec-modal-tab-detailed" onclick="switchSectionModalTab('detailed')" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-medium">
+          🔬 Comprehensive Exposition
+        </button>
+      </div>
+
+      <!-- Section Body Scroll Area -->
+      <div class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs sm:text-sm text-slate-200 leading-relaxed font-sans prose prose-invert max-w-none">
+        <div id="section-modal-body">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center justify-between gap-2 pt-3 border-t border-dark-800 flex-wrap">
+        <div class="flex items-center gap-2">
+          <button id="sec-modal-play-btn" onclick="playCurrentSectionFromModal()" class="px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-200 border border-dark-700 text-xs font-semibold flex items-center gap-1.5 transition">
+            <span>▶ Listen to Section</span>
+          </button>
+          <button onclick="askAiAboutCurrentSection()" class="px-3 py-1.5 rounded-xl bg-brand-600/20 text-brand-300 border border-brand-500/30 hover:bg-brand-600/30 text-xs font-semibold flex items-center gap-1.5 transition">
+            <span>💬 Ask AI Mentor</span>
+          </button>
+          <button onclick="takeNoteOnCurrentSection()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+            <span>📝 Take Note</span>
+          </button>
+        </div>
+        <button onclick="closeSectionDetailModal()" class="px-4 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 text-xs font-medium transition">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
   <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -1442,6 +1603,33 @@
     let isPlaying = false;
     let activeModalPaper = null;
     let preferredMode = localStorage.getItem('zam_preferred_mode') || 'summary';
+
+    // Reading Speed & Accent State
+    let currentPlaybackSpeed = parseFloat(localStorage.getItem('zam_playback_rate') || '1.0');
+    let currentBreakdownMode = 'summary'; // 'summary' or 'detailed'
+    let currentSectionKey = 'problem';
+    let sectionModalDisplayMode = 'summary';
+
+    const AVAILABLE_VOICES_LIST = [
+      { id: "en-NG-AbeoNeural", name: "🇬🇭 Abeo (West Africa / Ghana - Male, Expressive & Natural)", region: "Africa" },
+      { id: "en-NG-EzinneNeural", name: "🇬🇭 Ezinne (West Africa / Ghana - Female, Melodic & Clear)", region: "Africa" },
+      { id: "en-KE-ChilembaNeural", name: "🇰🇪 Chilemba (East Africa / Kenya - Male, Scholarly)", region: "Africa" },
+      { id: "en-KE-AsiliaNeural", name: "🇰🇪 Asilia (East Africa / Kenya - Female, Articulate)", region: "Africa" },
+      { id: "en-ZA-LukeNeural", name: "🇿🇦 Luke (South Africa - Male, Crisp & Modern)", region: "Africa" },
+      { id: "en-ZA-LeahNeural", name: "🇿🇦 Leah (South Africa - Female, Warm)", region: "Africa" },
+      { id: "en-TZ-ElimuNeural", name: "🇹🇿 Elimu (Tanzania - Male, Calm & Clear)", region: "Africa" },
+      { id: "en-US-ChristopherNeural", name: "🇺🇸 Christopher (US - Authoritative, Mentor)", region: "US" },
+      { id: "en-US-JennyNeural", name: "🇺🇸 Jenny (US - Warm, Engaging)", region: "US" },
+      { id: "en-US-GuyNeural", name: "🇺🇸 Guy (US - Natural, Conversational)", region: "US" },
+      { id: "en-US-AriaNeural", name: "🇺🇸 Aria (US - Professional, Clear)", region: "US" },
+      { id: "en-GB-RyanNeural", name: "🇬🇧 Ryan (UK - Academic, Articulate)", region: "UK" },
+      { id: "en-GB-SoniaNeural", name: "🇬🇧 Sonia (UK - Formal, Scholarly)", region: "UK" },
+      { id: "en-AU-WilliamNeural", name: "🇦🇺 William (Australia - Relaxed, Direct)", region: "Australia" },
+      { id: "en-IN-PrabhatNeural", name: "🇮🇳 Prabhat (India - Professional, Articulate)", region: "India" },
+      { id: "en-IN-NeerjaNeural", name: "🇮🇳 Neerja (India - Melodic, Clear)", region: "India" },
+      { id: "en-CA-LiamNeural", name: "🇨🇦 Liam (Canada - Calm & Modern)", region: "Canada" },
+      { id: "en-IE-ConnorNeural", name: "🇮🇪 Connor (Ireland - Scholarly & Warm)", region: "Ireland" }
+    ];
 
     // Reader Studio, Typography & Sleep Timer State
     let isZenMode = false;
@@ -1469,6 +1657,15 @@
       const settingVoiceEl = document.getElementById('setting-voice');
       if (quickVoiceEl) quickVoiceEl.value = savedVoice;
       if (settingVoiceEl) settingVoiceEl.value = savedVoice;
+
+      // Initialize Reading Playback Speed
+      currentPlaybackSpeed = parseFloat(localStorage.getItem('zam_playback_rate') || '1.0');
+      if (audioElement) audioElement.playbackRate = currentPlaybackSpeed;
+      updateSpeedUI();
+
+      // Initialize Voice Options & Cloud Database
+      renderReaderVoiceOptions();
+      checkCloudDatabaseStatus();
 
       updateHeroResumeBanner();
       fetchPapers();
@@ -1566,6 +1763,7 @@
       const zoteroKey = localStorage.getItem('zam_zotero_key') || '';
       const voice = localStorage.getItem('zam_voice') || 'en-NG-AbeoNeural';
       const defMode = localStorage.getItem('zam_preferred_mode') || 'summary';
+      const dbUrl = localStorage.getItem('zam_db_url') || '';
 
       if (document.getElementById('setting-gemini-key')) document.getElementById('setting-gemini-key').value = geminiKey;
       if (document.getElementById('setting-zotero-id')) document.getElementById('setting-zotero-id').value = zoteroId;
@@ -1573,6 +1771,8 @@
       if (document.getElementById('setting-voice')) document.getElementById('setting-voice').value = voice;
       if (document.getElementById('quick-voice-select')) document.getElementById('quick-voice-select').value = voice;
       if (document.getElementById('setting-default-mode')) document.getElementById('setting-default-mode').value = defMode;
+      if (document.getElementById('setting-db-url')) document.getElementById('setting-db-url').value = dbUrl;
+      checkCloudDatabaseStatus();
     }
 
     function saveSettings() {
@@ -1581,12 +1781,16 @@
       const zoteroKey = document.getElementById('setting-zotero-key').value.trim();
       const voice = document.getElementById('setting-voice').value;
       const defMode = document.getElementById('setting-default-mode') ? document.getElementById('setting-default-mode').value : 'summary';
+      const dbUrl = document.getElementById('setting-db-url') ? document.getElementById('setting-db-url').value.trim() : '';
 
       localStorage.setItem('zam_gemini_key', geminiKey);
       localStorage.setItem('zam_zotero_id', zoteroId);
       localStorage.setItem('zam_zotero_key', zoteroKey);
       localStorage.setItem('zam_voice', voice);
       localStorage.setItem('zam_preferred_mode', defMode);
+      if (dbUrl) {
+        localStorage.setItem('zam_db_url', dbUrl);
+      }
 
       if (document.getElementById('quick-voice-select')) {
         document.getElementById('quick-voice-select').value = voice;
@@ -2537,13 +2741,373 @@
       }
     }
 
+    // ================= READING PLAYBACK SPEED CONTROLS =================
+    function setPlaybackSpeed(speed) {
+      currentPlaybackSpeed = Math.max(0.5, Math.min(3.0, Math.round(parseFloat(speed) * 100) / 100));
+      localStorage.setItem('zam_playback_rate', currentPlaybackSpeed);
+      if (audioElement) {
+        audioElement.playbackRate = currentPlaybackSpeed;
+      }
+      updateSpeedUI();
+      const menu = document.getElementById('player-speed-menu');
+      if (menu) menu.classList.add('hidden');
+      showToast(`⚡ Playback speed: ${currentPlaybackSpeed}x`, 'info');
+    }
+
+    function adjustPlaybackSpeed(delta) {
+      const newSpeed = currentPlaybackSpeed + delta;
+      setPlaybackSpeed(newSpeed);
+    }
+
     function cyclePlaybackRate() {
-      const speeds = [0.8, 1.0, 1.25, 1.5, 1.75, 2.0];
-      const cur = audioElement.playbackRate || 1.0;
-      const next = speeds[(speeds.indexOf(cur) + 1) % speeds.length] || 1.0;
-      audioElement.playbackRate = next;
-      document.getElementById('player-speed-btn').textContent = `${next}x`;
-      showToast(`Playback speed: ${next}x`, 'info');
+      const speeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+      const idx = speeds.findIndex(s => Math.abs(s - currentPlaybackSpeed) < 0.05);
+      const next = speeds[(idx + 1) % speeds.length];
+      setPlaybackSpeed(next);
+    }
+
+    function updateSpeedUI() {
+      const formatted = `${currentPlaybackSpeed}x`;
+      const pBtn = document.getElementById('player-speed-btn');
+      const rLabel = document.getElementById('reader-speed-label');
+      if (pBtn) pBtn.textContent = formatted;
+      if (rLabel) rLabel.textContent = formatted;
+    }
+
+    function togglePlayerSpeedMenu() {
+      const menu = document.getElementById('player-speed-menu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    // ================= VOICE ACCENT SELECTION & IMMEDIATE SWITCH =================
+    function renderReaderVoiceOptions() {
+      const container = document.getElementById('reader-voice-options-container');
+      if (!container) return;
+      const currentVoice = localStorage.getItem('zam_voice') || 'en-NG-AbeoNeural';
+
+      container.innerHTML = AVAILABLE_VOICES_LIST.map(v => {
+        const isSelected = v.id === currentVoice;
+        return `
+          <div onclick="selectReaderVoice('${v.id}')" class="p-2 rounded-xl cursor-pointer flex items-center justify-between transition ${
+            isSelected ? 'bg-brand-500/15 border border-brand-500/30 text-white font-semibold' : 'hover:bg-dark-800 text-slate-300'
+          }">
+            <div class="flex items-center gap-2 truncate">
+              <span class="text-xs truncate">${escapeHtml(v.name)}</span>
+            </div>
+            ${isSelected ? '<span class="text-[10px] font-mono text-brand-400 font-bold shrink-0">Active</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleReaderVoiceMenu() {
+      const menu = document.getElementById('reader-voice-menu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+        renderReaderVoiceOptions();
+      }
+    }
+
+    function updateVoiceBadgeUI(voiceId) {
+      const v = AVAILABLE_VOICES_LIST.find(x => x.id === voiceId) || { name: voiceId, id: voiceId };
+      const flag = v.name.split(' ')[0] || '🗣️';
+      const shortName = v.name.split(' ')[1] || voiceId;
+      const badge = document.getElementById('modal-voice-badge');
+      const rLabel = document.getElementById('reader-voice-label');
+      if (badge) badge.textContent = `Voice: ${flag} ${shortName}`;
+      if (rLabel) rLabel.textContent = `${flag} ${shortName}`;
+    }
+
+    async function selectReaderVoice(voiceId) {
+      localStorage.setItem('zam_voice', voiceId);
+      updateVoiceBadgeUI(voiceId);
+      const settingSelect = document.getElementById('setting-voice');
+      if (settingSelect) settingSelect.value = voiceId;
+      const quickSelect = document.getElementById('quick-voice-select');
+      if (quickSelect) quickSelect.value = voiceId;
+
+      const menu = document.getElementById('reader-voice-menu');
+      if (menu) menu.classList.add('hidden');
+
+      if (!activeModalPaper) {
+        showToast(`Voice accent updated to ${voiceId}`, 'info');
+        return;
+      }
+
+      const confirmRegen = confirm(`Re-synthesize this paper using voice accent: "${voiceId}"?\n\n• Click OK to synthesize immediately\n• Click Cancel to save preference for future audio`);
+      if (confirmRegen) {
+        await reprocessWithVoice(activeModalPaper.id, voiceId);
+      }
+    }
+
+    async function reprocessWithVoice(paperId, voiceId) {
+      showToast('Synthesizing speech with new accent...', 'info');
+      try {
+        const res = await fetch(`/api/papers/${paperId}/change-voice`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ voice: voiceId, mode: activePlayingMode || 'summary' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Audio re-synthesized with new accent!`, 'success');
+          await fetchPapers();
+          const fresh = allPapers.find(p => p.id === paperId);
+          if (fresh) {
+            activeModalPaper = fresh;
+            populateModalFields(fresh);
+            if (isPlaying && activePlayingPaper && activePlayingPaper.id === paperId) {
+              playPaperTrack(fresh, activePlayingMode, data.audio_path);
+            }
+          }
+        } else {
+          showToast(data.detail || 'Voice synthesis failed', 'error');
+        }
+      } catch (err) {
+        showToast('Error changing voice: ' + err.message, 'error');
+      }
+    }
+
+    // ================= CLICKABLE BREAKDOWN SECTIONS & MODAL =================
+    function setBreakdownDisplayMode(mode) {
+      currentBreakdownMode = mode;
+      const sumBtn = document.getElementById('breakdown-mode-summary-btn');
+      const detBtn = document.getElementById('breakdown-mode-detailed-btn');
+      if (sumBtn && detBtn) {
+        if (mode === 'summary') {
+          sumBtn.className = 'px-2.5 py-1 rounded-xl text-xs font-semibold bg-brand-600 text-white shadow-sm transition';
+          detBtn.className = 'px-2.5 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition';
+        } else {
+          detBtn.className = 'px-2.5 py-1 rounded-xl text-xs font-semibold bg-brand-600 text-white shadow-sm transition';
+          sumBtn.className = 'px-2.5 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white transition';
+        }
+      }
+
+      if (activeModalPaper) {
+        renderBreakdownSections(activeModalPaper);
+      }
+    }
+
+    function renderBreakdownSections(paper) {
+      if (!paper) return;
+      const sections = [
+        { id: 'sec-problem', raw: paper.summary_problem },
+        { id: 'sec-methodology', raw: paper.summary_methodology },
+        { id: 'sec-results', raw: paper.summary_results },
+        { id: 'sec-limitations', raw: paper.summary_limitations }
+      ];
+
+      sections.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (!el) return;
+        const text = s.raw || 'Summary breakdown not generated yet. Click "Generate Summary Audio" above.';
+        if (currentBreakdownMode === 'summary') {
+          const sentences = text.split(/(?<=[.?!])\s+/).filter(x => x.trim().length > 0);
+          if (sentences.length > 2) {
+            el.innerHTML = marked.parse(sentences.slice(0, 2).join(' ') + '..');
+          } else {
+            el.innerHTML = marked.parse(text);
+          }
+        } else {
+          el.innerHTML = marked.parse(text);
+        }
+        renderMathInElementSafely(el);
+      });
+    }
+
+    function openSectionDetailModal(sectionKey) {
+      if (!activeModalPaper) return;
+      currentSectionKey = sectionKey;
+      const modal = document.getElementById('section-detail-modal');
+      if (!modal) return;
+
+      const info = getSectionMeta(sectionKey);
+      const badge = document.getElementById('section-modal-badge');
+      const title = document.getElementById('section-modal-title');
+      const subtitle = document.getElementById('section-modal-subtitle');
+      if (badge) {
+        badge.textContent = info.number;
+        badge.className = `w-8 h-8 rounded-xl ${info.badgeBg} ${info.textColor} flex items-center justify-center text-sm font-bold font-mono`;
+      }
+      if (title) title.textContent = info.title;
+      if (subtitle) subtitle.textContent = info.subtitle;
+
+      switchSectionModalTab(sectionModalDisplayMode);
+      modal.classList.remove('hidden');
+    }
+
+    function closeSectionDetailModal() {
+      document.getElementById('section-detail-modal')?.classList.add('hidden');
+    }
+
+    function getSectionMeta(key) {
+      const p = activeModalPaper || {};
+      switch(key) {
+        case 'problem':
+          return {
+            number: 1,
+            title: 'The Core Problem & Theoretical Foundation',
+            subtitle: 'Foundational motivation, research gap, and mathematical premise',
+            badgeBg: 'bg-rose-500/20',
+            textColor: 'text-rose-400',
+            rawText: p.summary_problem || ''
+          };
+        case 'methodology':
+          return {
+            number: 2,
+            title: 'Methodology & Architectural Formulation',
+            subtitle: 'Algorithmic design, empirical pipeline, and mathematical derivations',
+            badgeBg: 'bg-indigo-500/20',
+            textColor: 'text-indigo-400',
+            rawText: p.summary_methodology || ''
+          };
+        case 'results':
+          return {
+            number: 3,
+            title: 'Empirical Results & Benchmark Breakthroughs',
+            subtitle: 'Quantitative metrics, experimental baselines, and statistical validation',
+            badgeBg: 'bg-emerald-500/20',
+            textColor: 'text-emerald-400',
+            rawText: p.summary_results || ''
+          };
+        case 'limitations':
+          return {
+            number: 4,
+            title: 'Critical Limitations & Future PhD Horizons',
+            subtitle: 'Theoretical bounds, architectural failure modes, and open extensions',
+            badgeBg: 'bg-amber-500/20',
+            textColor: 'text-amber-400',
+            rawText: p.summary_limitations || ''
+          };
+        default:
+          return { number: 1, title: 'Paper Section', subtitle: '', badgeBg: 'bg-brand-500/20', textColor: 'text-brand-400', rawText: '' };
+      }
+    }
+
+    function switchSectionModalTab(mode) {
+      sectionModalDisplayMode = mode;
+      const tabSum = document.getElementById('sec-modal-tab-summary');
+      const tabDet = document.getElementById('sec-modal-tab-detailed');
+      if (tabSum && tabDet) {
+        if (mode === 'summary') {
+          tabSum.className = 'flex-1 py-1.5 rounded-lg bg-dark-800 text-white font-semibold shadow-sm transition';
+          tabDet.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-medium';
+        } else {
+          tabDet.className = 'flex-1 py-1.5 rounded-lg bg-dark-800 text-white font-semibold shadow-sm transition';
+          tabSum.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-medium';
+        }
+      }
+
+      const info = getSectionMeta(currentSectionKey);
+      const container = document.getElementById('section-modal-body');
+      if (!container) return;
+
+      const raw = info.rawText || 'Breakdown not available for this section.';
+      if (mode === 'summary') {
+        const sentences = raw.split(/(?<=[.?!])\s+/).filter(s => s.trim().length > 0);
+        const keyPoints = sentences.slice(0, 3).map(s => `<li class="mb-2 pl-1">${escapeHtml(s)}</li>`).join('');
+        container.innerHTML = `
+          <div class="p-4 rounded-2xl bg-dark-950 border border-dark-800 space-y-3">
+            <div class="text-xs uppercase font-bold tracking-wider text-slate-400">⚡ Core Executive Takeaways</div>
+            <ul class="list-disc list-inside text-xs sm:text-sm text-slate-200 leading-relaxed space-y-1">
+              ${keyPoints || `<li>${escapeHtml(raw)}</li>`}
+            </ul>
+            <div class="pt-3 border-t border-dark-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Switch to "Comprehensive Exposition" tab above for complete equations & details.</span>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="p-4 rounded-2xl bg-dark-950 border border-dark-800 prose prose-invert prose-sm max-w-none">
+              ${marked.parse(raw)}
+            </div>
+          </div>
+        `;
+        renderMathInElementSafely(container);
+      }
+    }
+
+    function playCurrentSectionFromModal() {
+      closeSectionDetailModal();
+      playPaperSection(currentSectionKey);
+    }
+
+    function askAiAboutCurrentSection() {
+      closeSectionDetailModal();
+      switchModalTab('chat');
+      const info = getSectionMeta(currentSectionKey);
+      const input = document.getElementById('paper-chat-input');
+      if (input) {
+        input.value = `Regarding section "${info.title}" of this paper:\n"${info.rawText}"\n\nCould you elaborate on the theoretical assumptions, methodology details, and critical implications?`;
+        sendPaperChatMessage();
+      }
+    }
+
+    function takeNoteOnCurrentSection() {
+      closeSectionDetailModal();
+      const info = getSectionMeta(currentSectionKey);
+      currentSelectedQuote = info.rawText.slice(0, 200) + '...';
+      openNoteModalForSelection();
+      const titleInput = document.getElementById('note-input-title');
+      const catInput = document.getElementById('note-input-category');
+      if (titleInput) titleInput.value = `${info.title} Analysis`;
+      if (catInput) {
+        if (currentSectionKey === 'problem') catInput.value = 'General';
+        else if (currentSectionKey === 'methodology') catInput.value = 'Methodology';
+        else if (currentSectionKey === 'results') catInput.value = 'Finding';
+        else if (currentSectionKey === 'limitations') catInput.value = 'Limitation';
+      }
+    }
+
+    // ================= SUPABASE / DATABASE SETTINGS =================
+    async function checkCloudDatabaseStatus() {
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) return;
+        const settings = await res.json();
+        const badge = document.getElementById('setting-db-badge');
+        if (badge) {
+          if (settings.is_cloud_database) {
+            badge.textContent = `🟢 ${settings.database_type}`;
+            badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold';
+          } else {
+            badge.textContent = `⚪ Local SQLite`;
+            badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-dark-800 text-slate-400 border border-dark-700';
+          }
+        }
+      } catch (e) {}
+    }
+
+    async function testDatabaseUrl() {
+      const input = document.getElementById('setting-db-url');
+      const url = input ? input.value.trim() : '';
+      if (!url) {
+        showToast('Please enter a database connection URL (e.g. Supabase URI)', 'error');
+        return;
+      }
+      showToast('Testing database connection and writability...', 'info');
+      try {
+        const res = await fetch('/api/settings/test-database', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ database_url: url })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(data.message, 'success');
+          const badge = document.getElementById('setting-db-badge');
+          if (badge) {
+            badge.textContent = `🟢 ${data.database_type}`;
+            badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          }
+        } else {
+          showToast(data.message || 'Connection failed', 'error');
+        }
+      } catch (err) {
+        showToast('Database test error: ' + err.message, 'error');
+      }
     }
 
     function handleVolumeChange(val) {
@@ -2958,13 +3522,14 @@
       document.getElementById('modal-paper-title').textContent = paper.title;
       document.getElementById('modal-paper-authors').textContent = paper.authors || 'Unknown Authors';
 
-      const voiceDisplay = paper.voice_used ? (
-        paper.voice_used.includes('Abeo') ? 'Abeo (Ghana 🇬🇭)' :
-        paper.voice_used.includes('Ezinne') ? 'Ezinne (Ghana 🇬🇭)' :
-        paper.voice_used.includes('Chilemba') ? 'Chilemba (Kenya 🇰🇪)' :
-        paper.voice_used.includes('Luke') ? 'Luke (South Africa 🇿🇦)' : paper.voice_used.split('-')[2]
-      ) : 'Abeo (Ghana 🇬🇭)';
-      document.getElementById('modal-voice-badge').textContent = `Voice: ${voiceDisplay}`;
+      const vObj = AVAILABLE_VOICES_LIST.find(x => x.id === (paper.voice_used || localStorage.getItem('zam_voice'))) || { name: '🇬🇭 Abeo', id: 'en-NG-AbeoNeural' };
+      const flag = vObj.name.split(' ')[0] || '🗣️';
+      const shortName = vObj.name.split(' ')[1] || (paper.voice_used ? paper.voice_used.split('-')[2] : 'Abeo');
+      document.getElementById('modal-voice-badge').textContent = `Voice: ${flag} ${shortName}`;
+      const rVoiceLabel = document.getElementById('reader-voice-label');
+      if (rVoiceLabel) rVoiceLabel.textContent = `${flag} ${shortName}`;
+      const rSpeedLabel = document.getElementById('reader-speed-label');
+      if (rSpeedLabel) rSpeedLabel.textContent = `${currentPlaybackSpeed}x`;
 
       const hasSummary = Boolean(paper.has_summary_audio || paper.summary_audio_path);
       const hasFull = Boolean(paper.has_full_audio || paper.full_audio_path);
@@ -3013,15 +3578,8 @@
 
       loadPaperChapters(paper.id);
 
-      // Populate 4 sections with KaTeX support
-      document.getElementById('sec-problem').innerHTML = marked.parse(paper.summary_problem || 'Summary breakdown not generated yet. Click "Generate Summary Audio" above.');
-      document.getElementById('sec-methodology').innerHTML = marked.parse(paper.summary_methodology || 'Summary breakdown not generated yet. Click "Generate Summary Audio" above.');
-      document.getElementById('sec-results').innerHTML = marked.parse(paper.summary_results || 'Summary breakdown not generated yet. Click "Generate Summary Audio" above.');
-      document.getElementById('sec-limitations').innerHTML = marked.parse(paper.summary_limitations || 'Summary breakdown not generated yet. Click "Generate Summary Audio" above.');
-      ['sec-problem', 'sec-methodology', 'sec-results', 'sec-limitations'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) renderMathInElementSafely(el);
-      });
+      // Populate 4 sections with KaTeX and display mode support
+      renderBreakdownSections(paper);
 
       // Populate full text with interactive karaoke paragraphs
       const fullTextEl = document.getElementById('modal-full-text-content');

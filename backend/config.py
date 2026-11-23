@@ -32,6 +32,24 @@ is_writable = _check_writable(BASE_DIR)
 
 import tempfile
 
+def normalize_database_url(url: str) -> str:
+    """Normalizes Postgres/Supabase URLs for SQLAlchemy compatibility."""
+    if not url:
+        return ""
+    clean = url.strip().strip("'").strip('"')
+    if clean.startswith("postgres://"):
+        clean = "postgresql://" + clean[len("postgres://"):]
+    return clean
+
+# Check Supabase / PostgreSQL environment variables
+raw_remote_db = (
+    os.getenv("SUPABASE_DB_URL", "").strip()
+    or os.getenv("POSTGRES_URL", "").strip()
+    or os.getenv("POSTGRES_PRISMA_URL", "").strip()
+    or os.getenv("POSTGRES_URL_NON_POOLING", "").strip()
+    or os.getenv("DATABASE_URL", "").strip()
+)
+
 if IS_SERVERLESS or not is_writable:
     # On serverless (Vercel, AWS Lambda) or read-only container, only /tmp (or system temp) is writable
     TMP_DIR = Path("/tmp") if (os.name != "nt" or Path("/tmp").exists()) else Path(tempfile.gettempdir())
@@ -51,17 +69,22 @@ if IS_SERVERLESS or not is_writable:
         except Exception:
             pass
 
-    # If DATABASE_URL is set to an external service (PostgreSQL, MySQL, etc.), honor it.
-    # If it is SQLite (or unset or relative ./), force it to writable temp path!
-    raw_db_url = os.getenv("DATABASE_URL", "").strip()
-    if raw_db_url and not raw_db_url.startswith("sqlite"):
-        DATABASE_URL = raw_db_url
+    # If an external database (Supabase, PostgreSQL, MySQL) is configured, prioritize it!
+    if raw_remote_db and not raw_remote_db.startswith("sqlite"):
+        DATABASE_URL = normalize_database_url(raw_remote_db)
     else:
         DATABASE_URL = f"sqlite:///{default_db_file.as_posix()}"
 else:
     AUDIO_DIR = STATIC_DIR / "audio"
     PDFS_DIR = STATIC_DIR / "pdfs"
-    DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'zotero_audio.db'}")
+    if raw_remote_db and not raw_remote_db.startswith("sqlite"):
+        DATABASE_URL = normalize_database_url(raw_remote_db)
+    else:
+        sqlite_env = os.getenv("DATABASE_URL", "").strip()
+        if sqlite_env and not sqlite_env.startswith("sqlite:///./"):
+            DATABASE_URL = sqlite_env
+        else:
+            DATABASE_URL = f"sqlite:///{BASE_DIR / 'zotero_audio.db'}"
 
 # Ensure directories exist safely without raising uncaught exceptions
 try:
@@ -101,5 +124,9 @@ AVAILABLE_VOICES = [
     {"id": "en-GB-RyanNeural", "name": "🇬🇧 Ryan (UK - Academic, Articulate)", "gender": "Male", "region": "UK"},
     {"id": "en-GB-SoniaNeural", "name": "🇬🇧 Sonia (UK - Formal, Scholarly)", "gender": "Female", "region": "UK"},
     {"id": "en-AU-WilliamNeural", "name": "🇦🇺 William (Australia - Relaxed, Direct)", "gender": "Male", "region": "AU"},
+    {"id": "en-IN-PrabhatNeural", "name": "🇮🇳 Prabhat (India - Professional, Articulate)", "gender": "Male", "region": "India"},
+    {"id": "en-IN-NeerjaNeural", "name": "🇮🇳 Neerja (India - Melodic, Clear)", "gender": "Female", "region": "India"},
+    {"id": "en-CA-LiamNeural", "name": "🇨🇦 Liam (Canada - Calm & Modern)", "gender": "Male", "region": "Canada"},
+    {"id": "en-IE-ConnorNeural", "name": "🇮🇪 Connor (Ireland - Scholarly & Warm)", "gender": "Male", "region": "Ireland"},
 ]
 

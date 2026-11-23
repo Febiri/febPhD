@@ -33,7 +33,8 @@ try:
     from backend.config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
         GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable,
+        DATABASE_URL, normalize_database_url
     )
     from backend.database import init_db, get_db, Paper
     from backend.zotero_sync import ZoteroSyncService
@@ -56,7 +57,8 @@ except ImportError:
     from config import (
         BASE_DIR, FRONTEND_DIR, STATIC_DIR, AUDIO_DIR, PDFS_DIR,
         GEMINI_API_KEY, GEMINI_MODEL, ZOTERO_LIBRARY_ID, ZOTERO_API_KEY,
-        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable
+        ZOTERO_LIBRARY_TYPE, DEFAULT_TTS_VOICE, AVAILABLE_VOICES, IS_SERVERLESS, is_writable,
+        DATABASE_URL, normalize_database_url
     )
     from database import init_db, get_db, Paper
     from zotero_sync import ZoteroSyncService
@@ -223,6 +225,15 @@ class PaperNoteRequest(BaseModel):
     category: Optional[str] = "Methodology"
     color: Optional[str] = "yellow"
     created_at: Optional[str] = None
+
+
+class VoiceChangeRequest(BaseModel):
+    voice: str
+    mode: Optional[str] = "summary"  # "summary" or "full_paper"
+
+
+class DatabaseConfigRequest(BaseModel):
+    database_url: str
 
 
 class ReviewerChatRequest(BaseModel):
@@ -427,6 +438,16 @@ def get_settings():
     zotero_lib = os.getenv("ZOTERO_LIBRARY_ID", ZOTERO_LIBRARY_ID)
     zotero_type = os.getenv("ZOTERO_LIBRARY_TYPE", ZOTERO_LIBRARY_TYPE)
 
+    db_str = (
+        os.getenv("SUPABASE_DB_URL")
+        or os.getenv("POSTGRES_URL")
+        or os.getenv("DATABASE_URL")
+        or str(DATABASE_URL)
+    )
+    is_supabase = "supabase" in db_str.lower()
+    is_postgres = "postgres" in db_str.lower()
+    db_type = "Supabase PostgreSQL" if is_supabase else ("PostgreSQL" if is_postgres else "Local SQLite")
+
     return {
         "has_gemini_key": bool(gemini_key),
         "gemini_key_preview": f"{gemini_key[:4]}...{gemini_key[-4:]}" if len(gemini_key) > 8 else ("Configured" if gemini_key else "Not Set"),
@@ -435,7 +456,48 @@ def get_settings():
         "zotero_library_id": zotero_lib or "",
         "zotero_library_type": zotero_type or "user",
         "default_voice": DEFAULT_TTS_VOICE,
+        "database_type": db_type,
+        "is_cloud_database": is_supabase or is_postgres,
+        "available_voices": AVAILABLE_VOICES,
     }
+
+
+@app.post("/api/settings/test-database")
+def test_database_connection(payload: DatabaseConfigRequest):
+    """Test connection and writability of a Supabase / PostgreSQL or SQLite database URL."""
+    url = payload.database_url.strip()
+    if not url:
+        return {"success": False, "message": "Database connection URL cannot be empty."}
+
+    norm_url = normalize_database_url(url)
+    try:
+        from sqlalchemy import create_engine, text
+        test_eng = create_engine(
+            norm_url,
+            connect_args={"check_same_thread": False} if norm_url.startswith("sqlite") else {},
+            pool_pre_ping=True
+        )
+        with test_eng.begin() as conn:
+            conn.execute(text("CREATE TABLE IF NOT EXISTS _zam_test (id INTEGER PRIMARY KEY)"))
+            conn.execute(text("DROP TABLE IF EXISTS _zam_test"))
+            try:
+                res = conn.execute(text("SELECT COUNT(*) FROM papers"))
+                paper_count = res.scalar() or 0
+            except Exception:
+                paper_count = 0
+
+        db_type = "Supabase PostgreSQL" if "supabase" in norm_url.lower() else ("PostgreSQL" if "postgres" in norm_url.lower() else "SQLite")
+        return {
+            "success": True,
+            "database_type": db_type,
+            "paper_count": paper_count,
+            "message": f"Connected to {db_type} successfully! Verified write privileges ({paper_count} papers currently stored)."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Database connection error: {str(e)}"
+        }
 
 
 @app.post("/api/settings/test-zotero")
@@ -1046,9 +1108,53 @@ def delete_paper(paper_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/audio/{filename}")
-def stream_audio(filename: str):
-    """Streams generated MP3 audio files with support for HTTP Range requests."""
+async def stream_audio(filename: str, db: Session = Depends(get_db)):
+    """Streams generated MP3 audio files with support for HTTP Range requests and on-demand synthesis."""
     audio_path = AUDIO_DIR / filename
+    if not audio_path.exists():
+        import re
+        match = re.match(r"^paper_(\d+)(?:_(full))?", filename)
+        if match:
+            paper_id = int(match.group(1))
+            is_full = bool(match.group(2))
+            paper = db.query(Paper).filter(Paper.id == paper_id).first()
+            if paper:
+                selected_voice = paper.voice_used or DEFAULT_TTS_VOICE
+                try:
+                    if is_full:
+                        text_to_speak = paper.full_text or paper.summary_text or paper.abstract
+                        if text_to_speak and text_to_speak.strip():
+                            cleaned = AudioSynthesizer.prepare_verbatim_for_speech(text_to_speak)
+                            _, dur = await AudioSynthesizer.synthesize_long_text_async(
+                                text=cleaned,
+                                output_filename=filename,
+                                voice=selected_voice
+                            )
+                            paper.full_audio_duration = dur
+                            db.commit()
+                    else:
+                        text_to_speak = paper.summary_text
+                        if not text_to_speak or not text_to_speak.strip():
+                            if paper.summary_problem:
+                                text_to_speak = (
+                                    f"## 1. The Core Problem\n{paper.summary_problem}\n\n"
+                                    f"## 2. Methodology\n{paper.summary_methodology or ''}\n\n"
+                                    f"## 3. Key Results\n{paper.summary_results or ''}\n\n"
+                                    f"## 4. Limitations\n{paper.summary_limitations or ''}"
+                                )
+                            else:
+                                text_to_speak = paper.abstract or paper.title
+                        if text_to_speak and text_to_speak.strip():
+                            _, dur = await AudioSynthesizer.synthesize_audio_async(
+                                text=text_to_speak,
+                                output_filename=filename,
+                                voice=selected_voice
+                            )
+                            paper.summary_audio_duration = dur
+                            db.commit()
+                except Exception as e:
+                    logger.warning(f"On-demand audio recovery failed: {e}")
+
     if not audio_path.exists():
         raise HTTPException(status_code=404, detail=f"Audio file '{filename}' not found.")
 
@@ -1058,6 +1164,75 @@ def stream_audio(filename: str):
         filename=filename,
         headers={"Accept-Ranges": "bytes"}
     )
+
+
+@app.post("/api/papers/{paper_id}/change-voice")
+async def change_paper_voice(paper_id: int, payload: VoiceChangeRequest, db: Session = Depends(get_db)):
+    """Re-synthesizes paper audio with a newly selected accent/voice."""
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    selected_voice = payload.voice or DEFAULT_TTS_VOICE
+    mode = payload.mode or "summary"
+
+    if mode == "full_paper":
+        verbatim_text = paper.full_text
+        if not verbatim_text or not verbatim_text.strip():
+            if paper.pdf_path and os.path.exists(paper.pdf_path):
+                verbatim_text = PDFProcessor.extract_full_text(paper.pdf_path)
+                paper.full_text = verbatim_text
+            else:
+                verbatim_text = paper.abstract or paper.title
+
+        cleaned_speech = AudioSynthesizer.prepare_verbatim_for_speech(verbatim_text)
+        audio_filename = f"paper_{paper.id}_full_{paper.zotero_item_key or 'direct'}.mp3"
+        _, duration = await AudioSynthesizer.synthesize_long_text_async(
+            text=cleaned_speech,
+            output_filename=audio_filename,
+            voice=selected_voice
+        )
+        paper.full_audio_path = f"/api/audio/{audio_filename}"
+        paper.full_audio_duration = duration
+        paper.audio_path = paper.full_audio_path
+        paper.audio_duration = duration
+        paper.audio_mode = "full_paper"
+    else:
+        briefing_script = paper.summary_text
+        if not briefing_script or not briefing_script.strip():
+            briefing_script = (
+                f"## 1. The Core Problem\n{paper.summary_problem or paper.abstract or paper.title}\n\n"
+                f"## 2. Methodology\n{paper.summary_methodology or 'Not specified.'}\n\n"
+                f"## 3. Key Results\n{paper.summary_results or 'Not specified.'}\n\n"
+                f"## 4. Limitations\n{paper.summary_limitations or 'Not specified.'}"
+            )
+
+        audio_filename = f"paper_{paper.id}_{paper.zotero_item_key or 'direct'}.mp3"
+        _, duration = await AudioSynthesizer.synthesize_audio_async(
+            text=briefing_script,
+            output_filename=audio_filename,
+            voice=selected_voice
+        )
+        paper.summary_audio_path = f"/api/audio/{audio_filename}"
+        paper.summary_audio_duration = duration
+        paper.audio_path = paper.summary_audio_path
+        paper.audio_duration = duration
+        paper.audio_mode = "summary"
+
+    paper.voice_used = selected_voice
+    paper.status = "Ready"
+    paper.error_message = None
+    db.commit()
+    db.refresh(paper)
+
+    return {
+        "success": True,
+        "message": f"Synthesized with voice '{selected_voice}'.",
+        "audio_path": paper.audio_path,
+        "audio_duration": paper.audio_duration,
+        "voice_used": paper.voice_used,
+        "audio_mode": paper.audio_mode
+    }
 
 
 @app.get("/api/papers/{paper_id}/figures")
