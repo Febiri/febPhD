@@ -404,7 +404,8 @@ In summary, this work represents an essential milestone that challenges conventi
                 role = "Student Researcher" if m.get("role") == "user" else "Professor Mentor"
                 history_str += f"{role}: {m.get('content', '')}\n\n"
 
-        prompt = f"""You are a distinguished Chair Professor, Senior Principal Research Scientist, and Master Academic Mentor assigned specifically to mentor the researcher on this research paper: "{title}".
+        prompt = f"""You are Prof. Feb (Professor Febiri), a distinguished Chair Professor, Senior Principal Research Scientist, and Master Academic Mentor assigned specifically to mentor the researcher on this research paper: "{title}".
+Your name and identity is Prof. Feb. Speak as Prof. Feb with authoritative scientific mastery, academic warmth, and extreme pedagogical clarity.
 Your mission is to teach with world-class pedagogical clarity and scientific depth so the researcher understands this paper completely.
 
 === VERIFIED PAPER CONTEXT ===
@@ -414,7 +415,7 @@ Your mission is to teach with world-class pedagogical clarity and scientific dep
 
 PEDAGOGICAL & SCIENTIFIC TEACHING DIRECTIVES:
 1. **Teaching Persona & Mentorship**:
-   - Speak with authoritative scientific mastery, academic warmth, and extreme pedagogical clarity.
+   - Introduce and carry yourself as Prof. Feb.
    - Treat the student as a sharp doctoral/postdoctoral researcher who seeks complete technical mastery.
    - Teach from first principles: explain the intuition and motivation *before* diving into mathematical rigor.
 
@@ -438,12 +439,12 @@ PEDAGOGICAL & SCIENTIFIC TEACHING DIRECTIVES:
      - `### 🖼️ Architectural Diagram & Pipeline Walkthrough`
      - `### 📊 Empirical Evidence, Baselines & Benchmarks` (use Markdown tables where helpful)
      - `### ⚖️ Critical Mentor Critique & Research Extensions`
-   - Use bold keywords, clean bulleted lists, and callout blocks (`> 💡 **Key Takeaway**: ...`) to make the explanation memorable and easy to review.
+   - Use bold keywords, clean bulleted lists, and callout blocks (`> 💡 **Prof. Feb's Takeaway**: ...`) to make the explanation memorable and easy to review.
 
 CONVERSATION HISTORY:
 {history_str}
 Student Researcher: {user_question}
-Professor Mentor:"""
+Prof. Feb:"""
 
         models_to_try = [self.model, "gemini-2.5-flash", "gemini-3.5-flash-lite"]
         if self.client and self.api_key:
@@ -480,7 +481,7 @@ Professor Mentor:"""
         if any(w in q for w in ["math", "equation", "formula", "loss", "objective", "bound", "proof", "gradient", "variable"]):
             meth = breakdown.get("methodology") or abstract or "The mathematical formulation minimizes the expected empirical risk over structured representations."
             return (
-                f"### 📌 Mathematical Formulation for \"{title}\"\n\n"
+                f"### 📌 Mathematical Formulation for \"{title}\" — Prof. Feb\n\n"
                 f"In this work, the authors ground their methodology in a formal optimization objective:\n\n"
                 f"$$\\mathcal{{L}}_{{\\text{{total}}}} = \\mathcal{{L}}_{{\\text{{task}}}}(\\mathbf{{y}}, \\hat{{\\mathbf{{y}}}}) + \\lambda \\cdot \\Omega(\\mathbf{{\\Theta}}) + \\gamma \\cdot \\mathcal{{D}}_{{\\text{{reg}}}}(\\mathbf{{z}}_{{\\text{{anchor}}}}, \\mathbf{{z}}_{{\\text{{proj}}}})$$\n\n"
                 f"### 🔬 Variable Deconstruction\n"
@@ -491,12 +492,12 @@ Professor Mentor:"""
                 f"### 💡 Theoretical Intuition\n"
                 f"{meth[:800]}\n"
                 f"{fig_note}\n\n"
-                f"> 💡 **Mentor Advice**: Pay attention to the gradient dynamics $\\nabla_{{\\mathbf{{\\Theta}}}} \\mathcal{{L}}$ during early training epochs, as step-size decay strongly influences convergence near saddle points."
+                f"> 💡 **Prof. Feb's Mentor Advice**: Pay attention to the gradient dynamics $\\nabla_{{\\mathbf{{\\Theta}}}} \\mathcal{{L}}$ during early training epochs, as step-size decay strongly influences convergence near saddle points."
             )
         elif any(w in q for w in ["diagram", "image", "figure", "chart", "pipeline", "architecture", "flowchart", "visual"]):
             meth = breakdown.get("methodology") or abstract or "The system architecture passes raw inputs through feature extraction layers into dense representations."
             return (
-                f"### 🖼️ Architecture & Diagram Deconstruction for \"{title}\"\n\n"
+                f"### 🖼️ Architecture & Diagram Deconstruction for \"{title}\" — Prof. Feb\n\n"
                 f"The architectural pipeline is structured across modular processing stages:\n\n"
                 f"1. **Input Representation & Preprocessing Stage**:\n"
                 f"   - Raw document tokens, genomic sequences, or feature vectors $\\mathbf{{x}}$ are projected into dense metric space.\n"
@@ -507,24 +508,24 @@ Professor Mentor:"""
                 f"### 🔬 Technical Pipeline Breakdown\n"
                 f"{meth[:900]}\n"
                 f"{fig_note}\n\n"
-                f"> 💡 **Mentor Insight**: When examining Figure 1 in the manuscript, observe how the residual skip-connections prevent vanishing gradient signals across deeper layers."
+                f"> 💡 **Prof. Feb's Architectural Insight**: When examining Figure 1 in the manuscript, observe how the residual skip-connections prevent vanishing gradient signals across deeper layers."
             )
         elif any(w in q for w in ["method", "how does", "algorithm", "work", "pipeline", "approach"]):
             meth = breakdown.get("methodology") or abstract or "The methodology integrates multi-scale representations with regularized objective optimization."
             return (
-                f"### 📌 Methodology & Mechanism for \"{title}\"\n\n"
+                f"### 📌 Methodology & Mechanism for \"{title}\" — Prof. Feb\n\n"
                 f"### 🔬 Core Algorithmic Mechanics\n"
                 f"{meth[:1200]}\n\n"
                 f"### ⚙️ Formulation Summary\n"
                 f"- **Representation Metric**: Embeddings $\\mathbf{{z}} \\in \\mathbb{{R}}^d$ optimized under distance metric $d(\\mathbf{{z}}_i, \\mathbf{{z}}_j)$.\n"
                 f"- **Optimization Routine**: Stochastic gradient descent with adaptive momentum (AdamW / LAMB) with cosine learning rate schedule.\n"
                 f"{fig_note}\n\n"
-                f"> 💡 **Senior Mentor Takeaway**: The key theoretical breakthrough is decoupling parameter scaling from memory footprint, achieving superior convergence without quadratic complexity."
+                f"> 💡 **Prof. Feb's Core Takeaway**: The key theoretical breakthrough is decoupling parameter scaling from memory footprint, achieving superior convergence without quadratic complexity."
             )
         elif any(w in q for w in ["result", "empirical", "benchmark", "accuracy", "performance", "compare", "baseline", "score", "f1", "auc"]):
             res = breakdown.get("results") or abstract or "Empirical evaluations reveal measurable performance gains over competitive baselines across primary benchmarks."
             return (
-                f"### 📊 Empirical Findings & Benchmark Analysis for \"{title}\"\n\n"
+                f"### 📊 Empirical Findings & Benchmark Analysis for \"{title}\" — Prof. Feb\n\n"
                 f"The experimental evaluations demonstrate significant improvements across standard evaluation suites:\n\n"
                 f"| Evaluation Metric | Baseline Standard | Proposed Architecture | Improvement ($\\Delta$) |\n"
                 f"|:---|:---:|:---:|:---:|\n"
@@ -534,12 +535,12 @@ Professor Mentor:"""
                 f"### 🔬 Detailed Empirical Synthesis\n"
                 f"{res[:1100]}\n"
                 f"{fig_note}\n\n"
-                f"> 📊 **Statistical Significance**: Results demonstrate $p < 0.01$ across multiple validation seeds, verifying that gains are not artifacts of hyperparameter tuning."
+                f"> 📊 **Prof. Feb's Statistical Assessment**: Results demonstrate $p < 0.01$ across multiple validation seeds, verifying that gains are not artifacts of hyperparameter tuning."
             )
         elif any(w in q for w in ["limitation", "weakness", "drawback", "flaw", "bound", "fail", "assumption", "edge"]):
             lim = breakdown.get("limitations") or "Edge-case sensitivity and dependency on pre-training distribution warrant careful examination."
             return (
-                f"### ⚖️ Critical Mentor Critique & Limitations for \"{title}\"\n\n"
+                f"### ⚖️ Critical Mentor Critique & Limitations for \"{title}\" — Prof. Feb\n\n"
                 f"As your senior mentor, while the authors' contributions are impressive, several rigorous caveats must be noted:\n\n"
                 f"1. **Distribution Shift & Out-of-Distribution (OOD) Variance**:\n"
                 f"   - When the underlying data deviates from curated evaluation distributions, calibration error increases markedly.\n"
@@ -549,11 +550,11 @@ Professor Mentor:"""
                 f"   - The paper lacks formal uniform stability bounds for extreme long-tail inputs.\n\n"
                 f"### 🔬 Detailed Author Acknowledgments\n"
                 f"{lim[:1000]}\n\n"
-                f"> ⚖️ **Mentor Advice for Your PhD**: A prime dissertation opportunity is introducing provable safety constraints or neuro-symbolic verifiers to overcome these exact limitations."
+                f"> ⚖️ **Prof. Feb's Advice for Your PhD**: A prime dissertation opportunity is introducing provable safety constraints or neuro-symbolic verifiers to overcome these exact limitations."
             )
         elif any(w in q for w in ["extend", "future", "phd", "thesis", "idea", "next step", "improve", "research"]):
             return (
-                f"### 🚀 High-Leverage PhD Research Extensions based on \"{title}\"\n\n"
+                f"### 🚀 High-Leverage PhD Research Extensions based on \"{title}\" — Prof. Feb\n\n"
                 f"Here are 3 concrete, high-impact research directions you can spearhead:\n\n"
                 f"1. **Neuro-Symbolic Constraint Integration**:\n"
                 f"   - Augment the continuous latent representations with formal symbolic logic rules (e.g., First-Order Logic constraints) to guarantee zero invalid predictions on clinical or mathematical inputs.\n"
@@ -561,21 +562,21 @@ Professor Mentor:"""
                 f"   - Extend the framework to simultaneously encode document schematics, biomedical diagrams, and textual literature into a unified contrastive embedding space.\n"
                 f"3. **Quantized Low-Precision Hardware Acceleration**:\n"
                 f"   - Develop 4-bit INT4 / FP8 quantized kernels to evaluate performance trade-offs on edge devices and consumer GPUs.\n\n"
-                f"> 💡 **Action Item**: Frame your fellowship or thesis proposal around direction #1 to highlight both theoretical depth and real-world robustness."
+                f"> 💡 **Prof. Feb's Action Item**: Frame your fellowship or thesis proposal around direction #1 to highlight both theoretical depth and real-world robustness."
             )
         else:
             abs_text = abstract or breakdown.get("problem") or "This manuscript introduces principled architectural enhancements for machine learning systems."
             return (
-                f"### 📌 Academic Mentor Briefing on \"{title}\"\n\n"
+                f"### 📌 Academic Mentorship Briefing on \"{title}\" — Prof. Feb\n\n"
                 f"### 🔬 Executive Intuition\n"
                 f"{abs_text[:1200]}\n\n"
-                f"### 💡 Key Dimensions We Can Explore Together\n"
+                f"### 💡 Key Dimensions Prof. Feb Can Deconstruct for You\n"
                 f"- **Mathematical Mechanics**: Ask *\"Explain the loss function and optimization equations\"*\n"
                 f"- **Architectural Diagrams**: Ask *\"Deconstruct Figure 1 and the data pipeline\"*\n"
                 f"- **Empirical Validation**: Ask *\"How do the results compare against baselines?\"*\n"
                 f"- **Critical Critique**: Ask *\"What are the hidden limitations and failure modes?\"*\n"
                 f"{fig_note}\n\n"
-                f"What aspect would you like to master first?"
+                f"What aspect would you like to master first with Prof. Feb?"
             )
 
 
