@@ -327,15 +327,20 @@ async def execute_processing_pipeline(
                 text=cleaned_speech,
                 output_filename=audio_filename,
                 voice=selected_voice,
-                concurrency=5,
+                concurrency=3,
+                max_chunk_chars=3000,
                 progress_callback=on_progress
             )
 
             if audio_path and os.path.exists(audio_path):
-                try:
-                    paper.full_audio_blob = Path(audio_path).read_bytes()
-                except Exception as b_err:
-                    logger.warning(f"Failed to persist full_audio_blob to database: {b_err}")
+                file_size = os.path.getsize(audio_path)
+                if file_size < 25 * 1024 * 1024:
+                    try:
+                        paper.full_audio_blob = Path(audio_path).read_bytes()
+                    except Exception as b_err:
+                        logger.warning(f"Failed to persist full_audio_blob to database: {b_err}")
+                else:
+                    logger.info(f"Full paper audio is {file_size / (1024*1024):.1f}MB, stored safely on local disk.")
 
             paper.full_audio_path = f"/api/audio/{audio_filename}"
             paper.full_audio_duration = duration
@@ -1267,10 +1272,12 @@ async def change_paper_voice(paper_id: int, payload: VoiceChangeRequest, db: Ses
             voice=selected_voice
         )
         if out_path and os.path.exists(out_path):
-            try:
-                paper.full_audio_blob = Path(out_path).read_bytes()
-            except Exception as b_err:
-                logger.warning(f"Failed to update full_audio_blob in database: {b_err}")
+            file_size = os.path.getsize(out_path)
+            if file_size < 25 * 1024 * 1024:
+                try:
+                    paper.full_audio_blob = Path(out_path).read_bytes()
+                except Exception as b_err:
+                    logger.warning(f"Failed to update full_audio_blob in database: {b_err}")
         paper.full_audio_path = f"/api/audio/{audio_filename}"
         paper.full_audio_duration = duration
         paper.audio_path = paper.full_audio_path

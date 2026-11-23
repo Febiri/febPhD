@@ -6,7 +6,7 @@ if str(_ROOT) not in sys.path:
 
 from datetime import datetime
 from typing import Generator
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, LargeBinary, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, LargeBinary, text, event
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, deferred
 
 try:
@@ -21,7 +21,6 @@ logger = logging.getLogger("database")
 def _create_safe_engine(url: str):
     import os
     import tempfile
-    from sqlalchemy import text
     from sqlalchemy.pool import StaticPool
 
     def _normalize_db_url(raw: str) -> str:
@@ -35,14 +34,39 @@ def _create_safe_engine(url: str):
     norm_url = _normalize_db_url(url)
 
     def _is_engine_writable(eng) -> bool:
-        try:
-            with eng.begin() as conn:
-                conn.execute(text("CREATE TABLE IF NOT EXISTS _zam_rw_check (id INTEGER PRIMARY KEY)"))
-                conn.execute(text("DROP TABLE IF EXISTS _zam_rw_check"))
-            return True
-        except Exception as e:
-            logger.warning(f"Engine {eng.url} failed write verification: {e}")
-            return False
+        if eng.url.drivername.startswith("sqlite"):
+            db_path = eng.url.database
+            if not db_path or db_path == ":memory:":
+                return True
+            p = Path(db_path)
+            try:
+                if p.exists():
+                    return os.access(p, os.W_OK)
+                else:
+                    return os.access(p.parent if p.parent.exists() else Path("."), os.W_OK)
+            except Exception:
+                return False
+        else:
+            try:
+                with eng.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+                return True
+            except Exception as e:
+                logger.warning(f"Engine {eng.url} connection check failed: {e}")
+                return False
+
+    def _configure_sqlite_pragmas(eng):
+        @event.listens_for(eng, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute("PRAGMA journal_mode = WAL")
+                cursor.execute("PRAGMA synchronous = NORMAL")
+                cursor.execute("PRAGMA busy_timeout = 30000")
+            except Exception:
+                pass
+            finally:
+                cursor.close()
 
     # Attempt 1: Configured database URL (Supabase PostgreSQL or SQLite)
     if norm_url.startswith("postgresql"):
@@ -71,8 +95,10 @@ def _create_safe_engine(url: str):
         try:
             eng = create_engine(
                 norm_url,
-                connect_args={"check_same_thread": False} if norm_url.startswith("sqlite") else {}
+                connect_args={"check_same_thread": False, "timeout": 30.0} if norm_url.startswith("sqlite") else {}
             )
+            if norm_url.startswith("sqlite") and ":memory:" not in norm_url:
+                _configure_sqlite_pragmas(eng)
             if _is_engine_writable(eng):
                 return eng
         except Exception as e:
@@ -83,7 +109,6 @@ def _create_safe_engine(url: str):
         tmp_dir = Path("/tmp") if (os.name != "nt" or Path("/tmp").exists()) else Path(tempfile.gettempdir())
         tmp_db_file = tmp_dir / "zotero_audio.db"
         if not tmp_db_file.exists():
-            # Try to copy existing base db content if available
             base_db = _ROOT / "zotero_audio.db"
             if base_db.exists():
                 try:
@@ -96,18 +121,19 @@ def _create_safe_engine(url: str):
                 except Exception:
                     pass
         tmp_url = f"sqlite:///{tmp_db_file.as_posix()}"
-        eng = create_engine(tmp_url, connect_args={"check_same_thread": False})
+        eng = create_engine(tmp_url, connect_args={"check_same_thread": False, "timeout": 30.0})
+        _configure_sqlite_pragmas(eng)
         if _is_engine_writable(eng):
             logger.info(f"Using verified writable temporary SQLite database at {tmp_url}")
             return eng
     except Exception as e:
         logger.warning(f"Temporary database fallback failed: {e}")
 
-    # Attempt 3: In-memory SQLite with StaticPool (always 100% writable, zero-disk)
+    # Attempt 3: In-memory SQLite with StaticPool (only if disk is truly unavailable)
     logger.warning("Falling back to in-memory SQLite database with StaticPool.")
     return create_engine(
         "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
+        connect_args={"check_same_thread": False, "timeout": 30.0},
         poolclass=StaticPool
     )
 
@@ -263,7 +289,10 @@ def init_db():
         search_dirs = [AUDIO_DIR, STATIC_DIR / "audio"]
         db = SessionLocal()
         try:
-            papers_to_backfill = db.query(Paper).all()
+            # Query only papers where at least one audio blob is missing
+            papers_to_backfill = db.query(Paper).filter(
+                (Paper.summary_audio_blob.is_(None)) | (Paper.full_audio_blob.is_(None))
+            ).all()
             updated_count = 0
             for paper in papers_to_backfill:
                 # Check summary audio
@@ -289,7 +318,7 @@ def init_db():
                         paper.summary_audio_blob = candidate.read_bytes()
                         updated_count += 1
 
-                # Check full audio
+                # Check full audio (store in DB if under 25MB threshold)
                 if paper.full_audio_blob is None:
                     candidate = None
                     if paper.full_audio_path:
@@ -308,7 +337,7 @@ def init_db():
                                     candidate = matches[0]
                                     paper.full_audio_path = f"/api/audio/{candidate.name}"
                                     break
-                    if candidate:
+                    if candidate and candidate.stat().st_size < 25 * 1024 * 1024:
                         paper.full_audio_blob = candidate.read_bytes()
                         updated_count += 1
 
