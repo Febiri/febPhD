@@ -10,6 +10,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for Scientific Formula Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -36,6 +45,100 @@
       }
     }
   </script>
+  <style>
+    /* Twin prose formatting for tables, headers, and code */
+    .twin-prose {
+      line-height: 1.65;
+    }
+    .twin-prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+      font-size: 0.73rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .twin-prose th, .twin-prose td {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 0.45rem 0.65rem;
+      text-align: left;
+    }
+    .twin-prose th {
+      background: rgba(124, 58, 237, 0.08);
+      font-weight: 700;
+      color: #6d28d9;
+    }
+    .twin-prose tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .twin-prose h3 {
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: 0.85rem;
+      margin-bottom: 0.35rem;
+      color: #1e293b;
+    }
+    .twin-prose h4 {
+      font-weight: 600;
+      font-size: 0.78rem;
+      margin-top: 0.65rem;
+      margin-bottom: 0.25rem;
+      color: #475569;
+    }
+    .twin-prose ul {
+      list-style-type: disc;
+      margin-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.35rem;
+    }
+    .twin-prose ol {
+      list-style-type: decimal;
+      margin-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.35rem;
+    }
+    .twin-prose li {
+      margin-bottom: 0.2rem;
+    }
+    .twin-prose blockquote {
+      border-left: 3px solid #7c3aed;
+      padding-left: 0.75rem;
+      margin: 0.5rem 0;
+      color: #475569;
+      background: rgba(124, 58, 237, 0.04);
+      border-radius: 0 0.4rem 0.4rem 0;
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+    .twin-prose code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.25rem;
+      font-size: 0.73rem;
+      color: #7c3aed;
+    }
+    .twin-prose pre {
+      margin: 0.65rem 0;
+      background: #0f172a;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .twin-prose pre code {
+      background: transparent;
+      padding: 0;
+      color: #e2e8f0;
+      display: block;
+    }
+    .twin-prose .katex-display {
+      margin: 0.65rem 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.25rem 0;
+    }
+  </style>
 </head>
 <body class="bg-slate-50/60 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
 
@@ -1385,30 +1488,131 @@
       sendChatMessage();
     }
 
-    function appendMessage(role, content) {
-      chatHistory.push({ role, content });
-      const container = document.getElementById('chat-messages');
-      const isUser = role === 'user';
-      const div = document.createElement('div');
-      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
-      div.innerHTML = `
-        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'} flex items-center justify-center font-bold text-[10px] shrink-0">${isUser ? 'YOU' : 'MF'}</span>
-        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-800'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
-      `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
-    function clearChat() {
+    function renderMathInElementSafely(el) {
+      if (!el) return;
+      if (window.renderMathInElement) {
+        try {
+          window.renderMathInElement(el, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+          });
+          return;
+        } catch (e) {}
+      }
+      if (window.katex) {
+        try {
+          el.innerHTML = el.innerHTML.replace(/\$\$([\s\S]*?)\$\$/g, (m, f) => {
+            try { return katex.renderToString(f.trim(), { displayMode: true, throwOnError: false }); } catch(e) { return m; }
+          });
+          el.innerHTML = el.innerHTML.replace(/\$([^\$\n\r]+?)\$/g, (m, f) => {
+            try { return katex.renderToString(f.trim(), { displayMode: false, throwOnError: false }); } catch(e) { return m; }
+          });
+        } catch (e) {}
+      }
+    }
+
+    function loadTwinChatHistory() {
+      const container = document.getElementById('chat-messages');
+      if (!container) return;
+
+      const saved = localStorage.getItem('zam_twin_chat_history');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            chatHistory = parsed;
+            container.innerHTML = `
+              <div class="flex items-center justify-between px-3.5 py-2 rounded-xl bg-purple-50 border border-purple-200 text-[11px] text-purple-700 mb-3 shadow-sm">
+                <span class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                  <span><strong>Session Resumed</strong> • ${chatHistory.length} messages restored from last visit</span>
+                </span>
+                <button onclick="clearChat()" class="text-[10px] text-purple-600 hover:text-rose-600 transition font-medium px-2 py-0.5 rounded bg-white border border-purple-200">Clear Chat</button>
+              </div>
+            `;
+            chatHistory.forEach(msg => {
+              renderTwinChatBubble(msg.role, msg.content, container, false);
+            });
+            container.scrollTop = container.scrollHeight;
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to parse twin chat history:', e);
+        }
+      }
+
+      // Default welcome message
       chatHistory = [];
-      document.getElementById('chat-messages').innerHTML = `
+      container.innerHTML = `
         <div class="flex items-start gap-2.5">
-          <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0">MF</span>
-          <div class="p-3.5 rounded-2xl bg-slate-100 text-slate-800 max-w-xl leading-relaxed">
-            Chat cleared. How can I assist you with your doctoral milestones, Mark?
+          <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">MF</span>
+          <div class="p-4 rounded-2xl bg-slate-100 text-slate-800 max-w-xl leading-relaxed twin-prose text-xs shadow-sm">
+            <p class="font-bold text-brand-700 mb-1">Hello Mark! I am your Autonomous Digital Twin & Executive Co-Pilot.</p>
+            <p>I am synced with your verified portfolio (<a href="https://febmac.vercel.app/" target="_blank" class="text-brand-600 font-bold underline">febmac.vercel.app</a>) and GitHub (<a href="https://github.com/Febiri" target="_blank" class="text-brand-600 font-bold underline">github.com/Febiri</a>). I know your foundational research across Neuro-Symbolic Agentic RAG, the ClawBio multi-omics workflow orchestrator, and your leadership as CTO of DevSpace Systems.</p>
+            <p class="mt-2 text-slate-600">All chat sessions are saved automatically so you can resume where you left off. What grant, lab outreach, or research milestone shall we execute?</p>
           </div>
         </div>
       `;
+    }
+
+    function renderTwinChatBubble(role, content, container, scroll = true) {
+      const isUser = role === 'user';
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
+      
+      if (isUser) {
+        div.innerHTML = `
+          <span class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">YOU</span>
+          <div class="p-3.5 rounded-2xl bg-brand-600 text-white max-w-xl leading-relaxed whitespace-pre-wrap text-xs shadow-sm">${escapeHtml(content)}</div>
+        `;
+      } else {
+        const formattedHtml = window.marked ? marked.parse(content) : `<p>${escapeHtml(content)}</p>`;
+        div.innerHTML = `
+          <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">MF</span>
+          <div class="p-4 rounded-2xl bg-slate-100 text-slate-800 max-w-2xl leading-relaxed twin-prose text-xs shadow-sm">${formattedHtml}</div>
+        `;
+        const proseDiv = div.querySelector('.twin-prose');
+        if (proseDiv) {
+          renderMathInElementSafely(proseDiv);
+        }
+      }
+      container.appendChild(div);
+      if (scroll) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function appendMessage(role, content) {
+      chatHistory.push({ role, content });
+      try {
+        localStorage.setItem('zam_twin_chat_history', JSON.stringify(chatHistory));
+      } catch (e) {}
+      const container = document.getElementById('chat-messages');
+      if (!container) return;
+      renderTwinChatBubble(role, content, container, true);
+    }
+
+    function clearChat() {
+      if (confirm('Clear Digital Twin chat history?')) {
+        localStorage.removeItem('zam_twin_chat_history');
+        chatHistory = [];
+        loadTwinChatHistory();
+      }
     }
 
     // Init
@@ -1416,6 +1620,7 @@
       populatePresets();
       checkGitHubStatus();
       loadBrainProfile();
+      loadTwinChatHistory();
 
       const params = new URLSearchParams(window.location.search);
       const applyMode = params.get('apply_mode');

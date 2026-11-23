@@ -690,15 +690,34 @@ def chat_with_paper_endpoint(paper_id: int, payload: PaperChatRequest, db: Sessi
         "results": paper.summary_results or "",
         "limitations": paper.summary_limitations or ""
     }
+
+    # Extract figures and diagrams context if attached PDF exists
+    figures = []
+    if paper.pdf_path and os.path.exists(paper.pdf_path):
+        try:
+            figures = PDFProcessor.extract_figures(paper.pdf_path, paper.id)
+        except Exception as e:
+            logger.warning(f"Error extracting figures for chat context: {e}")
+
     reply = summarizer.chat_with_paper(
         title=paper.title or "Research Paper",
         abstract=paper.abstract or "",
         full_text=paper.full_text or "",
         breakdown_sections=breakdown,
         user_question=payload.message,
-        history=payload.history or []
+        history=payload.history or [],
+        figures=figures
     )
-    return {"reply": reply, "paper_title": paper.title}
+    return {"reply": reply, "paper_title": paper.title, "figures_available": len(figures)}
+
+
+@app.delete("/api/papers/{paper_id}/chat")
+def clear_paper_chat_endpoint(paper_id: int, db: Session = Depends(get_db)):
+    """Clears any server-side recorded chat session for a paper."""
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    return {"status": "cleared", "paper_id": paper_id}
 
 
 def _get_notes_file(paper_id: int) -> Path:

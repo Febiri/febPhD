@@ -15,6 +15,7 @@
   <!-- KaTeX for Scientific Formula Rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -95,6 +96,102 @@
     .wave-bar:nth-child(4) { animation-delay: 0.45s; }
     .wave-bar:nth-child(5) { animation-delay: 0.2s; }
     .wave-bar:nth-child(6) { animation-delay: 0.35s; }
+
+    /* Academic prose typography & math/table formatting for AI Mentor */
+    .academic-prose {
+      line-height: 1.65;
+    }
+    .academic-prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.85rem 0;
+      font-size: 0.72rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .academic-prose th, .academic-prose td {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.45rem 0.65rem;
+      text-align: left;
+    }
+    .academic-prose th {
+      background: rgba(16, 185, 129, 0.12);
+      font-weight: 700;
+      color: #34d399;
+    }
+    .academic-prose tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .academic-prose h3 {
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: 0.9rem;
+      margin-bottom: 0.35rem;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+    .academic-prose h4 {
+      font-weight: 600;
+      font-size: 0.78rem;
+      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
+      color: #94a3b8;
+    }
+    .academic-prose ul {
+      list-style-type: disc;
+      margin-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.45rem;
+      space-y: 0.2rem;
+    }
+    .academic-prose ol {
+      list-style-type: decimal;
+      margin-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.45rem;
+    }
+    .academic-prose li {
+      margin-bottom: 0.25rem;
+    }
+    .academic-prose blockquote {
+      border-left: 3px solid #10b981;
+      padding-left: 0.85rem;
+      margin: 0.65rem 0;
+      color: #a7f3d0;
+      background: rgba(16, 185, 129, 0.05);
+      border-radius: 0 0.5rem 0.5rem 0;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
+    }
+    .academic-prose code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255, 255, 255, 0.09);
+      padding: 0.12rem 0.35rem;
+      border-radius: 0.3rem;
+      font-size: 0.73rem;
+      color: #a7f3d0;
+    }
+    .academic-prose pre {
+      margin: 0.65rem 0;
+      background: #060911;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.6rem;
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .academic-prose pre code {
+      background: transparent;
+      padding: 0;
+      color: #e2e8f0;
+      display: block;
+    }
+    .academic-prose .katex-display {
+      margin: 0.75rem 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.35rem 0;
+    }
 
     /* Active paragraph karaoke highlight */
     .academic-para-active {
@@ -3581,6 +3678,9 @@
       // Populate 4 sections with KaTeX and display mode support
       renderBreakdownSections(paper);
 
+      // Restore persistent AI Mentor chat history for this paper
+      loadPaperChatHistory(paper.id);
+
       // Populate full text with interactive karaoke paragraphs
       const fullTextEl = document.getElementById('modal-full-text-content');
       const fullStatsEl = document.getElementById('fulltext-stats');
@@ -3785,22 +3885,69 @@
         }
       }
       if (tab === 'notes') renderNotesList();
+      if (tab === 'chat') {
+        const container = document.getElementById('paper-chat-messages');
+        if (container) container.scrollTop = container.scrollHeight;
+        setTimeout(() => document.getElementById('paper-chat-input')?.focus(), 80);
+      }
     }
 
     let paperChatHistory = [];
 
-    function clearPaperChat() {
-      paperChatHistory = [];
+    function loadPaperChatHistory(paperId) {
+      if (!paperId) return;
       const container = document.getElementById('paper-chat-messages');
-      if (container) {
-        container.innerHTML = `
-          <div class="flex items-start gap-2.5">
-            <span class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-[10px] shrink-0">AI</span>
-            <div class="p-3.5 rounded-2xl bg-dark-850 text-slate-200 border border-dark-750 leading-relaxed max-w-xl">
-              Chat reset. What question do you have about this paper?
-            </div>
+      if (!container) return;
+
+      const saved = localStorage.getItem('zam_paper_chat_' + paperId);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            paperChatHistory = parsed;
+            container.innerHTML = `
+              <div class="flex items-center justify-between px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-950/80 to-dark-900 border border-brand-500/30 text-[11px] text-brand-300 mb-3 shadow-sm">
+                <span class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+                  <span><strong>Session Resumed</strong> • ${paperChatHistory.length} messages restored from last visit</span>
+                </span>
+                <button onclick="clearPaperChat()" class="text-[10px] text-slate-400 hover:text-rose-400 transition font-medium px-2 py-0.5 rounded bg-dark-800 border border-dark-700">Clear Chat</button>
+              </div>
+            `;
+            paperChatHistory.forEach(msg => {
+              renderChatBubble(msg.role, msg.content, container, false);
+            });
+            container.scrollTop = container.scrollHeight;
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to parse paper chat history:', e);
+        }
+      }
+
+      // If no history exists, render initial professorial greeting
+      paperChatHistory = [];
+      const title = activeModalPaper ? (activeModalPaper.title || 'this paper') : 'this paper';
+      container.innerHTML = `
+        <div class="flex items-start gap-2.5">
+          <span class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">AI</span>
+          <div class="p-4 rounded-2xl bg-dark-850 text-slate-200 border border-dark-750 leading-relaxed max-w-xl academic-prose text-xs shadow-sm">
+            <p class="font-bold text-brand-300 text-[13px] mb-1">🎓 Welcome to your Dedicated Research Mentorship Session</p>
+            <p class="text-slate-300">I am your Senior Principal Research Mentor for <em>"${escapeHtml(title.slice(0, 90))}${title.length > 90 ? '...' : ''}"</em>.</p>
+            <p class="mt-2 text-slate-400">Ask me to break down mathematical formulas ($...$, $$...$$), explain architectural figures and diagrams, deconstruct baseline benchmarks, or brainstorm extensions for your thesis. All conversation progress is automatically saved so you can resume anytime.</p>
           </div>
-        `;
+        </div>
+      `;
+    }
+
+    function clearPaperChat() {
+      if (!activeModalPaper) return;
+      if (confirm('Clear the saved chat session for this paper?')) {
+        localStorage.removeItem('zam_paper_chat_' + activeModalPaper.id);
+        paperChatHistory = [];
+        loadPaperChatHistory(activeModalPaper.id);
+        fetch(`/api/papers/${activeModalPaper.id}/chat`, { method: 'DELETE' }).catch(() => {});
+        showToast('Chat history cleared for this paper.', 'info');
       }
     }
 
@@ -3825,7 +3972,7 @@
       if (btn) {
         btn.disabled = true;
         originalBtnHtml = btn.innerHTML;
-        btn.innerHTML = `<svg class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Thinking...</span>`;
+        btn.innerHTML = `<svg class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Analyzing...</span>`;
       }
 
       // Append Loading Indicator Bubble
@@ -3841,7 +3988,7 @@
             <span class="w-2 h-2 rounded-full bg-brand-400 animate-bounce" style="animation-delay: 150ms"></span>
             <span class="w-2 h-2 rounded-full bg-brand-400 animate-bounce" style="animation-delay: 300ms"></span>
           </div>
-          <span class="text-[11px] font-mono text-slate-400 font-medium">AI Mentor analyzing manuscript...</span>
+          <span class="text-[11px] font-mono text-slate-400 font-medium">AI Professor synthesizing rigorous response...</span>
         </div>
       `;
       if (container) {
@@ -3872,17 +4019,44 @@
 
     function appendPaperChatMessage(role, content) {
       paperChatHistory.push({ role, content });
+      if (activeModalPaper) {
+        try {
+          localStorage.setItem('zam_paper_chat_' + activeModalPaper.id, JSON.stringify(paperChatHistory));
+        } catch (e) {
+          console.warn('LocalStorage quota or write error:', e);
+        }
+      }
       const container = document.getElementById('paper-chat-messages');
       if (!container) return;
+      renderChatBubble(role, content, container, true);
+    }
+
+    function renderChatBubble(role, content, container, scroll = true) {
       const isUser = role === 'user';
       const div = document.createElement('div');
       div.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`;
-      div.innerHTML = `
-        <span class="w-6 h-6 rounded-full ${isUser ? 'bg-slate-700 text-white' : 'bg-brand-500/20 text-brand-400'} flex items-center justify-center font-bold text-[10px] shrink-0">${isUser ? 'YOU' : 'AI'}</span>
-        <div class="p-3.5 rounded-2xl ${isUser ? 'bg-brand-600 text-white' : 'bg-dark-850 text-slate-200 border border-dark-750'} max-w-xl leading-relaxed whitespace-pre-wrap">${content}</div>
-      `;
+      
+      if (isUser) {
+        div.innerHTML = `
+          <span class="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">YOU</span>
+          <div class="p-3.5 rounded-2xl bg-brand-600 text-white max-w-xl leading-relaxed whitespace-pre-wrap text-xs shadow-sm">${escapeHtml(content)}</div>
+        `;
+      } else {
+        const formattedHtml = window.marked ? marked.parse(content) : `<p>${escapeHtml(content)}</p>`;
+        div.innerHTML = `
+          <span class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">AI</span>
+          <div class="p-4 rounded-2xl bg-dark-850 text-slate-200 border border-dark-750 max-w-2xl leading-relaxed academic-prose text-xs shadow-sm">${formattedHtml}</div>
+        `;
+        const proseDiv = div.querySelector('.academic-prose');
+        if (proseDiv) {
+          renderMathInElementSafely(proseDiv);
+        }
+      }
+      
       container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+      if (scroll) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
 
     function playModalTrack(mode) {
